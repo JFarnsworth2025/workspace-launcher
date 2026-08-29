@@ -1,9 +1,7 @@
-# Project Configuration
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent
 
-PROJECT_ROOT = Path.cwd()
-
-DEFAULT_AUTHOR = "Jacob"
-
-VERSION = "v1.0.0"
+APP_NAME = "Workspace Launcher"
+APP_AUTHOR = "Pariven"
+APP_VERSION = "0.1.0"
