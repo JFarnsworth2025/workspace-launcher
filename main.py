@@ -1,20 +1,17 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication,
-    QMainWindow,
 )
-from config import APP_NAME
+from ui.main_window import MainWindow
 
 
 def main() -> None:
     app = QApplication(sys.argv)
-
-    window = QMainWindow()
-    window.setWindowTitle(APP_NAME)
-    window.resize(1000, 700)
-    window.show()
-
-    sys.exit(app.exec())
+    
+        window = MainWindow()
+        window.show()
+    
+        sys.exit(app.exec())
 
 
 if __name__ == "__main__":
