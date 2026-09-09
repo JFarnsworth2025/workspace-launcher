@@ -5,10 +5,11 @@ from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
     QWidget,
+    QListWidget,
 )
 from config import APP_NAME
 from ui.workspace_editor import WorkspaceEditor
-from services.workspace_service import save_workspace
+from services.workspace_service import save_workspace, load_workspaces
 
 
 class MainWindow(QMainWindow):
@@ -24,9 +25,14 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
+        self.workspace_list = QListWidget()
+        layout.addWidget(self.workspace_list)
+
         create_workspace_button = QPushButton("Create Workspace")
         layout.addWidget(create_workspace_button)
         create_workspace_button.clicked.connect(self.create_workspace)
+
+        self.refresh_workspaces()
 
     def create_workspace(self) -> None:
 
@@ -44,3 +50,10 @@ class MainWindow(QMainWindow):
             return
 
         save_workspace(workspace)
+        self.refresh_workspaces()
+
+    def refresh_workspaces(self) -> None:
+        self.workspace_list.clear()
+        workspaces = load_workspaces()
+        for workspace in workspaces:
+            self.workspace_list.addItem(workspace["name"])
