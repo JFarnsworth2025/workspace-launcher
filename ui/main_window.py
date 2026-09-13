@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 from config import APP_NAME
 from ui.workspace_editor import WorkspaceEditor
 from services.workspace_service import save_workspace, load_workspaces, delete_workspace
+from services.launcher_service import launch_workspace
 
 
 class MainWindow(QMainWindow):
@@ -39,6 +40,10 @@ class MainWindow(QMainWindow):
         delete_workspace_button = QPushButton("Delete Workspace")
         layout.addWidget(delete_workspace_button)
         delete_workspace_button.clicked.connect(self.delete_selected_workspace)
+
+        launch_workspace_button = QPushButton("Launch Workspace")
+        layout.addWidget(launch_workspace_button)
+        launch_workspace_button.clicked.connect(self.launch_selected_workspace)
 
         self.refresh_workspaces()
 
@@ -73,7 +78,7 @@ class MainWindow(QMainWindow):
     def get_selected_workspace(self) -> dict | None:
         row = self.workspace_list.currentRow()
         if row == -1:
-            QMessageBox.warning(self, "Warning", "Please select a workspace to edit.")
+            QMessageBox.warning(self, "Warning", "Please select a workspace first.")
             return None
 
         return self.workspaces[row]
@@ -121,3 +126,28 @@ class MainWindow(QMainWindow):
 
         delete_workspace(workspace["name"])
         self.refresh_workspaces()
+
+    def launch_selected_workspace(self) -> None:
+        workspace = self.get_selected_workspace()
+
+        if workspace is None:
+            return
+
+        if not workspace["applications"]:
+            QMessageBox.information(
+                self,
+                "Empty Workspace",
+                "Add an application to the workspace before launching.",
+            )
+            return
+
+        successful_launches, launch_errors = launch_workspace(workspace)
+
+        message = f"Started {successful_launches} application(s) successfully."
+
+        if launch_errors:
+            message += "\n\nCould not start:\n" + "\n".join(launch_errors)
+            QMessageBox.warning(self, "Launch Errors", message)
+            return
+
+        QMessageBox.information(self, "Launch Successful", message)
