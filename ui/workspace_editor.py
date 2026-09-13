@@ -48,9 +48,9 @@ class WorkspaceEditor(QDialog):
         form_layout.addRow("Display order:", self.order_input)
 
         self.application_list = QListWidget()
-        add_button = QPushButton("Add Application")
-        edit_button = QPushButton("Edit Application")
-        remove_button = QPushButton("Remove Application")
+        add_button = QPushButton("Add Item")
+        edit_button = QPushButton("Edit Item")
+        remove_button = QPushButton("Remove Item")
 
         add_button.clicked.connect(self.add_application)
         edit_button.clicked.connect(self.edit_application)
@@ -100,9 +100,7 @@ class WorkspaceEditor(QDialog):
     def get_selected_application_row(self) -> int:
         row = self.application_list.currentRow()
         if row == -1:
-            QMessageBox.warning(
-                self, "Warning", "Please select an application to edit."
-            )
+            QMessageBox.warning(self, "Warning", "Please select an item first.")
             return -1
         return row
 

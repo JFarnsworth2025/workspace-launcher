@@ -137,13 +137,13 @@ class MainWindow(QMainWindow):
             QMessageBox.information(
                 self,
                 "Empty Workspace",
-                "Add an application to the workspace before launching.",
+                "Add an item to the workspace before launching.",
             )
             return
 
         successful_launches, launch_errors = launch_workspace(workspace)
 
-        message = f"Started {successful_launches} application(s) successfully."
+        message = f"Opened {successful_launches} item(s) successfully."
 
         if launch_errors:
             message += "\n\nCould not start:\n" + "\n".join(launch_errors)
