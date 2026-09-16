@@ -2,6 +2,11 @@ import os
 import subprocess
 
 running_processes: list[tuple[str, subprocess.Popen]] = []
+active_workspace_name: str | None = None
+
+
+def get_active_workspace_name() -> str | None:
+    return active_workspace_name
 
 
 def get_running_applications() -> list[str]:
@@ -12,6 +17,14 @@ def get_running_applications() -> list[str]:
 
 
 def launch_workspace(workspace: dict) -> tuple[int, list[str]]:
+
+    global active_workspace_name
+
+    if active_workspace_name is not None:
+        raise ValueError(
+            f"Cannot launch workspace '{workspace['name']}' because workspace '{active_workspace_name}' is already running."
+        )
+
     successful_launches = 0
     launch_errors = []
 
@@ -30,4 +43,14 @@ def launch_workspace(workspace: dict) -> tuple[int, list[str]]:
         except OSError as e:
             launch_errors.append(f"Failed to open {application['name']}: {e}")
 
+    if successful_launches > 0:
+        active_workspace_name = workspace["name"]
+
     return successful_launches, launch_errors
+
+
+def end_workspace() -> None:
+    global active_workspace_name
+
+    running_processes.clear()
+    active_workspace_name = None

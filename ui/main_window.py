@@ -7,10 +7,15 @@ from PySide6.QtWidgets import (
     QWidget,
     QListWidget,
 )
+from services.launcher_service import (
+    launch_workspace,
+    end_workspace,
+    get_active_workspace_name,
+)
+
 from config import APP_NAME
 from ui.workspace_editor import WorkspaceEditor
 from services.workspace_service import save_workspace, load_workspaces, delete_workspace
-from services.launcher_service import launch_workspace
 
 
 class MainWindow(QMainWindow):
@@ -45,7 +50,12 @@ class MainWindow(QMainWindow):
         layout.addWidget(launch_workspace_button)
         launch_workspace_button.clicked.connect(self.launch_selected_workspace)
 
+        end_workspace_button = QPushButton("End Workspace")
+        layout.addWidget(end_workspace_button)
+        end_workspace_button.clicked.connect(self.end_active_workspace)
+
         self.refresh_workspaces()
+        self.refresh_session_status()
 
     def create_workspace(self) -> None:
 
@@ -141,7 +151,13 @@ class MainWindow(QMainWindow):
             )
             return
 
-        successful_launches, launch_errors = launch_workspace(workspace)
+        try:
+            successful_launches, launch_errors = launch_workspace(workspace)
+        except ValueError as e:
+            QMessageBox.warning(self, "Workspace Active Already", str(e))
+            return
+
+        self.refresh_session_status()
 
         message = f"Opened {successful_launches} item(s) successfully."
 
@@ -151,3 +167,34 @@ class MainWindow(QMainWindow):
             return
 
         QMessageBox.information(self, "Launch Successful", message)
+
+    def refresh_session_status(self) -> None:
+        name = get_active_workspace_name()
+
+        if name is None:
+            self.statusBar().showMessage("No active workspace.")
+        else:
+            self.statusBar().showMessage(f"Active workspace: {name}")
+
+    def end_active_workspace(self) -> None:
+        name = get_active_workspace_name()
+
+        if name is None:
+            QMessageBox.information(
+                self, "No Active Workspace", "There is no active workspace to end."
+            )
+            return
+
+        answer = QMessageBox.question(
+            self,
+            "End Workspace",
+            f"Are you sure you want to end the workspace '{name}'? All applications launched by this workspace will stay open.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+
+        end_workspace()
+        self.refresh_session_status()
