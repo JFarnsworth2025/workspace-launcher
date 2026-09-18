@@ -16,6 +16,7 @@ from services.launcher_service import (
     get_active_workspace_name,
     request_application_close,
     get_running_applications,
+    active_session,
 )
 
 from config import APP_NAME
@@ -63,6 +64,15 @@ class MainWindow(QMainWindow):
         end_workspace_button = QPushButton("End Workspace")
         layout.addWidget(end_workspace_button)
         end_workspace_button.clicked.connect(self.end_active_workspace)
+
+        self.pause_button = QPushButton("Pause")
+        layout.addWidget(self.pause_button)
+        self.pause_button.clicked.connect(self.toggle_pause)
+
+        self.session_timer = QTimer(self)
+        self.session_timer.setInterval(1000)
+        self.session_timer.timeout.connect(self.refresh_session_status)
+        self.session_timer.start()
 
         self.refresh_workspaces()
         self.refresh_session_status()
@@ -180,11 +190,21 @@ class MainWindow(QMainWindow):
 
     def refresh_session_status(self) -> None:
         name = get_active_workspace_name()
+        closing = self.close_timer.isActive()
+
+        self.pause_button.setEnabled(name is not None and not closing)
+        self.pause_button.setText("Resume" if active_session.paused else "Pause")
+
+        if closing:
+            self.statusBar().showMessage("Closing Applications... Please wait")
+            return
 
         if name is None:
             self.statusBar().showMessage("No active workspace.")
         else:
-            self.statusBar().showMessage(f"Active workspace: {name}")
+            state = "Paused" if active_session.paused else "Active"
+            elapsed = active_session.get_elapsed_time()
+            self.statusBar().showMessage(f"{state}: {name} | {elapsed}")
 
     def end_active_workspace(self) -> None:
 
@@ -281,3 +301,14 @@ class MainWindow(QMainWindow):
                 "The workspace remains active. You can retry ending it.\n\n"
                 + "\n".join(running_apps),
             )
+
+    def toggle_pause(self) -> None:
+        if self.close_timer.isActive() or not active_session.active:
+            return
+
+        if active_session.paused:
+            active_session.resume()
+        else:
+            active_session.pause()
+
+        self.refresh_session_status()

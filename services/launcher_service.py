@@ -1,8 +1,12 @@
 import os
 import subprocess
 
+from services.workspace_session_service import WorkspaceSession
+
 running_processes: list[tuple[str, subprocess.Popen]] = []
 active_workspace_name: str | None = None
+
+active_session = WorkspaceSession()
 
 
 def get_active_workspace_name() -> str | None:
@@ -45,13 +49,14 @@ def launch_workspace(workspace: dict) -> tuple[int, list[str]]:
 
     if successful_launches > 0:
         active_workspace_name = workspace["name"]
-
+        active_session.start()
     return successful_launches, launch_errors
 
 
 def end_workspace() -> None:
     global active_workspace_name
 
+    active_session.end()
     running_processes.clear()
     active_workspace_name = None
 
