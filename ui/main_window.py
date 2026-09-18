@@ -7,10 +7,15 @@ from PySide6.QtWidgets import (
     QWidget,
     QListWidget,
 )
+
+from PySide6.QtCore import QTimer
+
 from services.launcher_service import (
     launch_workspace,
     end_workspace,
     get_active_workspace_name,
+    request_application_close,
+    get_running_applications,
 )
 
 from config import APP_NAME
@@ -22,6 +27,11 @@ class MainWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
+
+        self.close_checks = 0
+        self.close_timer = QTimer(self)
+        self.close_timer.setInterval(250)
+        self.close_timer.timeout.connect(self.check_application_close)
 
         self.setWindowTitle(APP_NAME)
         self.resize(1000, 700)
@@ -177,6 +187,15 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"Active workspace: {name}")
 
     def end_active_workspace(self) -> None:
+
+        if self.close_timer.isActive():
+            QMessageBox.information(
+                self,
+                "Closing Applications",
+                "Please wait for the applications to close before ending the workspace.",
+            )
+            return
+
         name = get_active_workspace_name()
 
         if name is None:
@@ -188,7 +207,7 @@ class MainWindow(QMainWindow):
         answer = QMessageBox.question(
             self,
             "End Workspace",
-            f"Are you sure you want to end the workspace '{name}'? All applications launched by this workspace will stay open.",
+            f'End "{name}"? You can choose whether to close its applications next.',
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -196,5 +215,69 @@ class MainWindow(QMainWindow):
         if answer != QMessageBox.StandardButton.Yes:
             return
 
+        close_choice = QMessageBox.question(
+            self,
+            "Close Applications",
+            "Force-stop tracked applications? Unsaved work may be lost.\n"
+            "Files, folders, and websites will remain open.\n\n"
+            "Yes: force-stop applications.\n"
+            "No: leave applications open.\n"
+            "Cancel: keep the workspace active.",
+            QMessageBox.StandardButton.Yes
+            | QMessageBox.StandardButton.No
+            | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.No,
+        )
+
+        if close_choice == QMessageBox.StandardButton.Cancel:
+            return
+
+        if close_choice == QMessageBox.StandardButton.Yes:
+            close_errors = request_application_close()
+
+            if close_errors:
+                QMessageBox.warning(
+                    self,
+                    "Close Errors",
+                    "Some applications could not be closed:\n"
+                    + "\n".join(close_errors),
+                )
+
+            self.close_checks = 0
+            self.close_timer.start()
+            self.statusBar().showMessage("Closing applications... Please wait.")
+            return
+
         end_workspace()
         self.refresh_session_status()
+
+    def check_application_close(self) -> None:
+        self.close_checks += 1
+
+        try:
+            running_apps = get_running_applications()
+        except OSError as e:
+            self.close_timer.stop()
+            self.refresh_session_status()
+            QMessageBox.warning(
+                self,
+                "Error Checking Applications",
+                f"An error occurred while checking running applications: {e}",
+            )
+            return
+
+        if not running_apps:
+            self.close_timer.stop()
+            end_workspace()
+            self.refresh_session_status()
+            return
+
+        if self.close_checks >= 20:
+            self.close_timer.stop()
+            self.refresh_session_status()
+            QMessageBox.warning(
+                self,
+                "Applications Still Running",
+                "The workspace remains active. You can retry ending it.\n\n"
+                + "\n".join(running_apps),
+            )

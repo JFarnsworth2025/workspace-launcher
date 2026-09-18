@@ -54,3 +54,17 @@ def end_workspace() -> None:
 
     running_processes.clear()
     active_workspace_name = None
+
+
+def request_application_close() -> list[str]:
+    close_errors = []
+
+    for name, process in running_processes:
+        try:
+            if process.poll() is not None:
+                continue
+            process.terminate()
+        except OSError as e:
+            close_errors.append(f"Failed to close {name}: {e}")
+
+    return close_errors
