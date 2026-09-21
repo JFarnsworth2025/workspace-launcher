@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from services.workspace_session_service import WorkspaceSession
+from services.history_service import save_session
 
 running_processes: list[tuple[str, subprocess.Popen]] = []
 active_workspace_name: str | None = None
@@ -56,7 +57,11 @@ def launch_workspace(workspace: dict) -> tuple[int, list[str]]:
 def end_workspace() -> None:
     global active_workspace_name
 
+    if active_workspace_name is None:
+        return
+
     active_session.end()
+    save_session(active_session.to_dict(active_workspace_name))
     running_processes.clear()
     active_workspace_name = None
 

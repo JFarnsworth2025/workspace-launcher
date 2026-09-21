@@ -192,7 +192,7 @@ class MainWindow(QMainWindow):
         name = get_active_workspace_name()
         closing = self.close_timer.isActive()
 
-        self.pause_button.setEnabled(name is not None and not closing)
+        self.pause_button.setEnabled(active_session.active and not closing)
         self.pause_button.setText("Resume" if active_session.paused else "Pause")
 
         if closing:
@@ -201,6 +201,10 @@ class MainWindow(QMainWindow):
 
         if name is None:
             self.statusBar().showMessage("No active workspace.")
+        elif not active_session.active:
+            self.statusBar().showMessage(
+                f"History not saved: {name} | Click End Workspace to retry."
+            )
         else:
             state = "Paused" if active_session.paused else "Active"
             elapsed = active_session.get_elapsed_time()
@@ -222,6 +226,10 @@ class MainWindow(QMainWindow):
             QMessageBox.information(
                 self, "No Active Workspace", "There is no active workspace to end."
             )
+            return
+
+        if not active_session.active:
+            self.finish_workspace()
             return
 
         answer = QMessageBox.question(
@@ -268,8 +276,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Closing applications... Please wait.")
             return
 
-        end_workspace()
-        self.refresh_session_status()
+        self.finish_workspace()
 
     def check_application_close(self) -> None:
         self.close_checks += 1
@@ -288,8 +295,7 @@ class MainWindow(QMainWindow):
 
         if not running_apps:
             self.close_timer.stop()
-            end_workspace()
-            self.refresh_session_status()
+            self.finish_workspace()
             return
 
         if self.close_checks >= 20:
@@ -310,5 +316,21 @@ class MainWindow(QMainWindow):
             active_session.resume()
         else:
             active_session.pause()
+
+        self.refresh_session_status()
+
+    def finish_workspace(self) -> None:
+        try:
+            end_workspace()
+        except (OSError, ValueError) as e:
+            self.refresh_session_status()
+            QMessageBox.warning(
+                self,
+                "History Not Saved",
+                "The session timer has stopped, but its history could not be saved.\n\n"
+                "The record is kept in memory while this app stays open. After resolving the problem, click End Workspace to retry.\n\n"
+                f"{e}",
+            )
+            return
 
         self.refresh_session_status()
