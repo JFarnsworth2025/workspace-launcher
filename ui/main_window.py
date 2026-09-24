@@ -21,6 +21,7 @@ from services.launcher_service import (
 
 from config import APP_NAME
 from ui.workspace_editor import WorkspaceEditor
+from ui.history_window import HistoryWindow
 from services.workspace_service import save_workspace, load_workspaces, delete_workspace
 
 
@@ -69,6 +70,10 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.pause_button)
         self.pause_button.clicked.connect(self.toggle_pause)
 
+        history_button = QPushButton("View History")
+        layout.addWidget(history_button)
+        history_button.clicked.connect(self.show_history)
+
         self.session_timer = QTimer(self)
         self.session_timer.setInterval(1000)
         self.session_timer.timeout.connect(self.refresh_session_status)
@@ -76,6 +81,10 @@ class MainWindow(QMainWindow):
 
         self.refresh_workspaces()
         self.refresh_session_status()
+
+    def show_history(self) -> None:
+        history_window = HistoryWindow(self)
+        history_window.exec()
 
     def create_workspace(self) -> None:
 
