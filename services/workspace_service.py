@@ -1,12 +1,29 @@
 import json
+import ntpath
 from pathlib import Path
 from config import WORKSPACES_DIR
 from services.json_service import save_json
 
 
 def get_workspace_file(workspace_name: str) -> Path:
+    if not isinstance(workspace_name, str) or not workspace_name.strip():
+        raise ValueError("Workspace name cannot be empty.")
+    if workspace_name != workspace_name.strip():
+        raise ValueError("Workspace name cannot start or end with whitespace.")
+    if len(workspace_name) > 120:
+        raise ValueError("Workspace name must be 120 characters or fewer.")
+    if workspace_name.endswith(".") or ntpath.isreserved(workspace_name):
+        raise ValueError(
+            'Use a Windows-safe workspace name: no reserved names, trailing dots, '
+            'or characters such as < > : " / \\ | ? *.'
+        )
     filename = workspace_name.lower().replace(" ", "_")
-    return WORKSPACES_DIR / f"{filename}.json"
+    path = WORKSPACES_DIR / f"{filename}.json"
+    if ntpath.isreserved(path.name):
+        raise ValueError("That workspace name is reserved by Windows.")
+    if path.resolve().parent != WORKSPACES_DIR.resolve():
+        raise ValueError("Workspace files must stay inside the workspace directory.")
+    return path
 
 
 def load_workspaces() -> list[dict]:

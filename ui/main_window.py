@@ -103,8 +103,8 @@ class MainWindow(QMainWindow):
 
         try:
             save_workspace(workspace)
-        except FileExistsError as e:
-            QMessageBox.warning(self, "Warning", str(e))
+        except (OSError, ValueError) as e:
+            QMessageBox.warning(self, "Could Not Save Workspace", str(e))
             return
         self.refresh_workspaces()
 
@@ -140,8 +140,8 @@ class MainWindow(QMainWindow):
 
         try:
             save_workspace(workspace, original_name=original_workspace["name"])
-        except FileExistsError as e:
-            QMessageBox.warning(self, "Warning", str(e))
+        except (OSError, ValueError) as e:
+            QMessageBox.warning(self, "Could Not Save Workspace", str(e))
             return
 
         self.refresh_workspaces()
@@ -163,7 +163,11 @@ class MainWindow(QMainWindow):
         if answer != QMessageBox.StandardButton.Yes:
             return
 
-        delete_workspace(workspace["name"])
+        try:
+            delete_workspace(workspace["name"])
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Could Not Delete Workspace", str(error))
+            return
         self.refresh_workspaces()
 
     def launch_selected_workspace(self) -> None:
