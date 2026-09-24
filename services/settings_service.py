@@ -1,6 +1,7 @@
 import json
 
 from config import SETTINGS_FILE
+from services.json_service import save_json
 
 DEFAULT_SETTINGS = {
     "greeting_name": "",
@@ -25,5 +26,4 @@ def load_settings() -> dict:
 
 
 def save_settings(settings: dict) -> None:
-    with SETTINGS_FILE.open("w", encoding="utf-8") as file:
-        json.dump(settings, file, indent=4)
+    save_json(SETTINGS_FILE, settings)

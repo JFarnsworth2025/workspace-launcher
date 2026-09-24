@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from config import WORKSPACES_DIR
+from services.json_service import save_json
 
 
 def get_workspace_file(workspace_name: str) -> Path:
@@ -31,8 +32,7 @@ def save_workspace(workspace: dict, original_name: str | None = None) -> None:
     if workspace_file.exists() and original_file != workspace_file:
         raise FileExistsError(f"Workspace '{workspace['name']}' already exists.")
 
-    with workspace_file.open("w", encoding="utf-8") as file:
-        json.dump(workspace, file, indent=4)
+    save_json(workspace_file, workspace)
 
     if (
         original_file is not None

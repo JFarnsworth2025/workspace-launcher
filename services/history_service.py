@@ -1,6 +1,7 @@
 import json
 
 from config import HISTORY_FILE
+from services.json_service import save_json
 
 
 def load_history() -> list[dict]:
@@ -20,5 +21,4 @@ def save_session(session_record: dict) -> None:
     history = load_history()
     history.append(session_record)
 
-    with HISTORY_FILE.open("w", encoding="utf-8") as file:
-        json.dump(history, file, indent=4)
+    save_json(HISTORY_FILE, history)
