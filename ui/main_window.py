@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import (
     QMainWindow,
+    QApplication,
     QSystemTrayIcon,
     QMenu,
     QMessageBox,
@@ -40,6 +41,7 @@ from services.bible_services import get_daily_verse
 from ui.verse_card import VerseCard
 from services.quote_service import get_daily_quotes
 from ui.quote_card import QuoteCard
+from services.power_event_service import PowerEventService
 
 
 WORKSPACES_PER_ROW = 3
@@ -136,6 +138,61 @@ class MainWindow(QMainWindow):
         self.refresh_workspaces()
         self.refresh_last_workspace()
         self.refresh_session_status()
+        self.setup_power_events()
+
+    def setup_power_events(self) -> None:
+        self.automatic_pause_reasons = set()
+        self.automatically_paused_start = None
+        self.power_events_registered = False
+        self.power_event_service = PowerEventService()
+        self.power_event_service.suspending.connect(self.handle_system_suspend)
+        self.power_event_service.resumed.connect(self.handle_system_resume)
+        self.power_event_service.locked.connect(self.handle_system_lock)
+        self.power_event_service.unlocked.connect(self.handle_system_unlock)
+        app = QApplication.instance()
+        app.installNativeEventFilter(self.power_event_service)
+        app.aboutToQuit.connect(self.cleanup_power_events)
+        try:
+            self.power_event_service.register_window(int(self.winId()))
+            self.power_events_registered = True
+        except OSError as error:
+            QMessageBox.warning(self, "Automatic Lock Pause Unavailable", str(error))
+
+    def cleanup_power_events(self) -> None:
+        if self.power_events_registered:
+            self.power_event_service.unregister_window(int(self.winId()))
+            self.power_events_registered = False
+        QApplication.instance().removeNativeEventFilter(self.power_event_service)
+
+    def add_automatic_pause_reason(self, reason: str) -> None:
+        self.automatic_pause_reasons.add(reason)
+        if not active_session.active or active_session.paused:
+            return
+        self.automatically_paused_start = active_session.start_time
+        active_session.pause()
+        self.refresh_session_status()
+
+    def remove_automatic_pause_reason(self, reason: str) -> None:
+        self.automatic_pause_reasons.discard(reason)
+        if self.automatic_pause_reasons:
+            return
+        if (active_session.active and active_session.paused
+                and active_session.start_time == self.automatically_paused_start):
+            active_session.resume()
+        self.automatically_paused_start = None
+        self.refresh_session_status()
+
+    def handle_system_suspend(self) -> None:
+        self.add_automatic_pause_reason("sleeping")
+
+    def handle_system_resume(self) -> None:
+        self.remove_automatic_pause_reason("sleeping")
+
+    def handle_system_lock(self) -> None:
+        self.add_automatic_pause_reason("locked")
+
+    def handle_system_unlock(self) -> None:
+        self.remove_automatic_pause_reason("locked")
 
     def create_empty_workspace_state(self) -> QFrame:
         empty_state = QFrame()
@@ -290,6 +347,7 @@ class MainWindow(QMainWindow):
             event.ignore()
             return
         self.tray_icon.hide()
+        self.cleanup_power_events()
         if self.workspace_manager is not None:
             self.workspace_manager.close()
         event.accept()
@@ -622,6 +680,10 @@ class MainWindow(QMainWindow):
     def toggle_pause(self) -> None:
         if self.close_timer.isActive() or not active_session.active:
             return
+
+        if self.automatic_pause_reasons:
+            return
+        self.automatically_paused_start = None
 
         if active_session.paused:
             active_session.resume()
