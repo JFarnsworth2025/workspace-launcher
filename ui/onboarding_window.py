@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QDialog,
     QCheckBox,
+    QDialog,
     QFrame,
     QLabel,
     QLineEdit,
@@ -22,13 +22,14 @@ class OnboardingWindow(QDialog):
         self.setWindowTitle("Welcome to Workspace Launcher")
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setModal(True)
-        self.setFixedSize(560, 440)
+        self.setFixedSize(560, 500)
 
         self.title_label = QLabel("Make Workspace Launcher yours")
         self.title_label.setObjectName("onboardingTitle")
 
         self.subtitle_label = QLabel(
-            "Before we build your dashboard, choose how you would like to be greeted."
+            "Before we build your dashboard, choose how you would like to be greeted "
+            "and what daily content you want to see."
         )
         self.subtitle_label.setObjectName("onboardingSubtitle")
         self.subtitle_label.setWordWrap(True)
@@ -50,11 +51,22 @@ class OnboardingWindow(QDialog):
         self.name_input.setPlaceholderText("Enter your name")
         self.name_input.setMaxLength(40)
 
-        self.verse_checkbox = QCheckBox("Show daily Bible verse")
+        self.content_frame = QFrame()
+        self.content_frame.setObjectName("onboardingSection")
+
+        self.content_label = QLabel("Choose your daily content")
+        self.content_label.setObjectName("onboardingSectionTitle")
+
+        self.content_description = QLabel(
+            "You can change either choice later from File → Settings."
+        )
+        self.content_description.setObjectName("onboardingDescription")
+
+        self.verse_checkbox = QCheckBox("Show a daily Bible verse")
         self.verse_checkbox.setObjectName("onboardingCheckbox")
         self.verse_checkbox.setChecked(True)
 
-        self.quote_checkbox = QCheckBox("Show daily motivational quote")
+        self.quote_checkbox = QCheckBox("Show a daily motivational quote")
         self.quote_checkbox.setObjectName("onboardingCheckbox")
         self.quote_checkbox.setChecked(True)
 
@@ -69,14 +81,21 @@ class OnboardingWindow(QDialog):
         name_layout.addWidget(self.name_description)
         name_layout.addWidget(self.name_input)
 
+        content_layout = QVBoxLayout(self.content_frame)
+        content_layout.setContentsMargins(18, 16, 18, 16)
+        content_layout.setSpacing(9)
+        content_layout.addWidget(self.content_label)
+        content_layout.addWidget(self.content_description)
+        content_layout.addWidget(self.verse_checkbox)
+        content_layout.addWidget(self.quote_checkbox)
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 26, 28, 26)
         layout.setSpacing(14)
         layout.addWidget(self.title_label)
         layout.addWidget(self.subtitle_label)
         layout.addWidget(self.name_frame)
-        layout.addWidget(self.verse_checkbox)
-        layout.addWidget(self.quote_checkbox)
+        layout.addWidget(self.content_frame)
         layout.addStretch()
         layout.addWidget(self.continue_button)
 
