@@ -34,6 +34,8 @@ from services.history_service import load_history
 from services.workspace_service import load_workspaces
 from services.bible_services import get_daily_verse
 from ui.verse_card import VerseCard
+from services.quote_service import get_daily_quotes
+from ui.quote_card import QuoteCard
 
 
 class MainWindow(QMainWindow):
@@ -57,7 +59,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
 
         greeting_name = ""
-        settings = {"bible_verse": False}
+        settings = {"bible_verse": False, "motivation_quote": False}
         settings_error = False
         try:
             settings = load_settings()
@@ -81,6 +83,8 @@ class MainWindow(QMainWindow):
         layout.addLayout(self.quotes_verses)
         self.verse_card = None
         self.refresh_verse(settings)
+        self.quote_card = None
+        self.refresh_quote(settings)
 
         self.workspace_list = QListWidget()
         self.workspace_cards = []
@@ -155,6 +159,17 @@ class MainWindow(QMainWindow):
         self.workspace_manager.raise_()
         self.workspace_manager.activateWindow()
 
+    def refresh_quote(self, settings: dict) -> None:
+        if self.quote_card is not None:
+            self.quotes_verses.removeWidget(self.quote_card)
+            self.quote_card.deleteLater()
+            self.quote_card = None
+
+        if settings["motivation_quote"]:
+            daily_quote = get_daily_quotes()
+            self.quote_card = QuoteCard(daily_quote)
+            self.quotes_verses.addWidget(self.quote_card, 1)
+
     def select_workspace_card(self, workspace: dict) -> None:
         if get_active_workspace_name() is not None:
             return
@@ -194,6 +209,7 @@ class MainWindow(QMainWindow):
         if settings_window.exec() == QDialog.DialogCode.Accepted:
             self.header.set_greeting_name(settings_window.settings["greeting_name"])
             self.refresh_verse(settings_window.settings)
+            self.refresh_quote(settings_window.settings)
 
     def refresh_workspaces(self) -> None:
         errors = []

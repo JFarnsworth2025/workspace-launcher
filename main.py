@@ -28,6 +28,7 @@ def main() -> None:
         "settings.qss",
         "onboarding.qss",
         "verse_card.qss",
+        "quote_card.qss",
     ]:
         with (PROJECT_ROOT / "styles" / filename).open(encoding="utf-8") as file:
             stylesheet += file.read() + "\n"

@@ -36,6 +36,8 @@ def load_settings() -> dict:
         raise ValueError("The close applications setting must be true or false.")
     if type(settings["bible_verse"]) is not bool:
         raise ValueError("The Bible verse setting must be true or false.")
+    if type(settings["motivation_quote"]) is not bool:
+        raise ValueError("The motivational quote setting must be true or false.")
     return settings
 
 

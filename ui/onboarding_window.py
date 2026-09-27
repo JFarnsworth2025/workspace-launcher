@@ -22,7 +22,7 @@ class OnboardingWindow(QDialog):
         self.setWindowTitle("Welcome to Workspace Launcher")
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setModal(True)
-        self.setFixedSize(560, 400)
+        self.setFixedSize(560, 440)
 
         self.title_label = QLabel("Make Workspace Launcher yours")
         self.title_label.setObjectName("onboardingTitle")
@@ -54,6 +54,10 @@ class OnboardingWindow(QDialog):
         self.verse_checkbox.setObjectName("onboardingCheckbox")
         self.verse_checkbox.setChecked(True)
 
+        self.quote_checkbox = QCheckBox("Show daily motivational quote")
+        self.quote_checkbox.setObjectName("onboardingCheckbox")
+        self.quote_checkbox.setChecked(True)
+
         self.continue_button = QPushButton("Continue to Workspace Launcher")
         self.continue_button.setObjectName("primaryButton")
         self.continue_button.clicked.connect(self.save_profile)
@@ -72,6 +76,7 @@ class OnboardingWindow(QDialog):
         layout.addWidget(self.subtitle_label)
         layout.addWidget(self.name_frame)
         layout.addWidget(self.verse_checkbox)
+        layout.addWidget(self.quote_checkbox)
         layout.addStretch()
         layout.addWidget(self.continue_button)
 
@@ -94,6 +99,7 @@ class OnboardingWindow(QDialog):
             settings = load_settings()
             settings["greeting_name"] = greeting_name
             settings["bible_verse"] = self.verse_checkbox.isChecked()
+            settings["motivation_quote"] = self.quote_checkbox.isChecked()
             save_settings(settings)
         except (OSError, ValueError) as error:
             QMessageBox.warning(self, "Could Not Save Profile", str(error))
