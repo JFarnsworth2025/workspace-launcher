@@ -8,6 +8,9 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QLabel,
     QHBoxLayout,
+    QFrame,
+    QSizePolicy,
+    QPushButton,
 )
 
 from PySide6.QtCore import QTimer, Qt
@@ -92,6 +95,8 @@ class MainWindow(QMainWindow):
         card_styles = (PROJECT_ROOT / "styles/workspace_cards.qss").read_text(encoding="utf-8")
         card_styles += (PROJECT_ROOT / "styles/typography.qss").read_text(encoding="utf-8")
         self.workspace_list.setStyleSheet(card_styles)
+        self.empty_workspace_state = self.create_empty_workspace_state()
+        layout.addWidget(self.empty_workspace_state, 0, Qt.AlignmentFlag.AlignHCenter)
         layout.addWidget(self.workspace_list)
         self.workspace_list.currentRowChanged.connect(self.refresh_session_status)
 
@@ -113,6 +118,63 @@ class MainWindow(QMainWindow):
         self.refresh_workspaces()
         self.refresh_last_workspace()
         self.refresh_session_status()
+
+    def create_empty_workspace_state(self) -> QFrame:
+        empty_state = QFrame()
+        empty_state.setObjectName("emptyWorkspaceState")
+        empty_state.setMinimumWidth(560)
+        empty_state.setMaximumWidth(680)
+        empty_state.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Maximum,
+        )
+
+        empty_layout = QVBoxLayout(empty_state)
+        empty_layout.setContentsMargins(38, 28, 38, 26)
+        empty_layout.setSpacing(8)
+        empty_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        icon = QLabel("＋")
+        icon.setObjectName("emptyWorkspaceIcon")
+        icon.setFixedSize(52, 52)
+        icon.setContentsMargins(0, 0, 0, 3)
+        icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        title = QLabel("Create your first workspace")
+        title.setObjectName("emptyWorkspaceTitle")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        description = QLabel(
+            "Group the applications, files, folders, and websites you use together."
+        )
+        description.setObjectName("emptyWorkspaceDescription")
+        description.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        description.setWordWrap(True)
+
+        create_button = QPushButton("Create Workspace")
+        create_button.setObjectName("emptyWorkspacePrimaryButton")
+        create_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        create_button.clicked.connect(self.create_first_workspace)
+
+        manager_button = QPushButton("Open Workspace Manager")
+        manager_button.setObjectName("emptyWorkspaceManagerButton")
+        manager_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        manager_button.clicked.connect(self.show_workspace_manager)
+
+        empty_layout.addWidget(icon, 0, Qt.AlignmentFlag.AlignCenter)
+        empty_layout.addSpacing(12)
+        empty_layout.addWidget(title)
+        empty_layout.addWidget(description)
+        empty_layout.addSpacing(8)
+        empty_layout.addWidget(create_button, 0, Qt.AlignmentFlag.AlignCenter)
+        empty_layout.addSpacing(2)
+        empty_layout.addWidget(manager_button, 0, Qt.AlignmentFlag.AlignCenter)
+
+        return empty_state
+
+    def create_first_workspace(self) -> None:
+        self.show_workspace_manager()
+        self.workspace_manager.add_workspace()
 
     def create_navbar(self) -> None:
         self.menu_bar = self.menuBar()
@@ -255,6 +317,8 @@ class MainWindow(QMainWindow):
             self.workspace_list.addItem(item)
             self.workspace_list.setItemWidget(item, card)
             self.workspace_cards.append(card)
+        self.empty_workspace_state.setVisible(not workspaces and not errors)
+        self.workspace_list.setVisible(bool(workspaces) or bool(errors))
         if errors:
             message = "Some workspaces could not be loaded. Files were not changed. "
             message += "Fix the listed files, then choose Workspaces > Reload Workspaces.\n\n"
