@@ -26,25 +26,87 @@ def get_workspace_file(workspace_name: str) -> Path:
     return path
 
 
-def load_workspaces() -> list[dict]:
+def validate_loaded_workspace(data: object, source: Path) -> dict:
+    if not isinstance(data, dict):
+        raise ValueError("Workspace must be a JSON object.")
+    expected = get_workspace_file(data.get("name"))
+    if expected.name.lower() != source.name.lower():
+        raise ValueError("Filename does not match the workspace name.")
+    if source.resolve().parent != WORKSPACES_DIR.resolve():
+        raise ValueError("Workspace file points outside the workspace directory.")
+    order = data.get("order", 1)
+    if type(order) is not int:
+        raise ValueError("Display order must be an integer.")
+    if order < 1 or order > 999:
+        raise ValueError("Display order must be an integer between 1 and 999.")
+    applications = data.get("applications", [])
+    if not isinstance(applications, list):
+        raise ValueError("Workspace items must be a list.")
+    for item in applications:
+        if not isinstance(item, dict):
+            raise ValueError("Each workspace item must be a JSON object.")
+
+        name = item.get("name")
+        path = item.get("path")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("Each item needs a name.")
+        if not isinstance(path, str) or not path.strip():
+            raise ValueError("Each item needs a path or URL.")
+        if "\x00" in name or "\x00" in path:
+            raise ValueError("Item names and paths cannot contain null characters.")
+
+        launch_type = item.get("launch_type", "application")
+        if launch_type != "application" and launch_type != "resource":
+            raise ValueError("Item launch type must be application or resource.")
+
+        arguments = item.get("arguments", [])
+        if not isinstance(arguments, list):
+            raise ValueError("Item arguments must be a list.")
+        for argument in arguments:
+            if not isinstance(argument, str) or "\x00" in argument:
+                raise ValueError("Each argument must be text without null characters.")
+
+    workspace = data.copy()
+    workspace["order"] = order
+    workspace["applications"] = applications
+    return workspace
+
+
+def load_workspaces(errors: list[str] | None = None) -> list[dict]:
+    """Collect file errors when a list is supplied; otherwise raise them."""
     workspaces = []
 
-    for workspace_file in WORKSPACES_DIR.glob("*.json"):
-        with workspace_file.open("r", encoding="utf-8") as file:
-            workspace = json.load(file)
+    try:
+        files = sorted(WORKSPACES_DIR.iterdir())
+    except OSError as error:
+        if errors is None:
+            raise
+        errors.append(f"Could not read workspace directory: {error}")
+        return []
 
-        workspaces.append(workspace)
+    for workspace_file in files:
+        if workspace_file.suffix.lower() != ".json":
+            continue
+        try:
+            with workspace_file.open("r", encoding="utf-8") as file:
+                data = json.load(file)
+            workspace = validate_loaded_workspace(data, workspace_file)
+            workspaces.append(workspace)
+        except (OSError, ValueError, RuntimeError, RecursionError) as error:
+            if errors is None:
+                raise
+            errors.append(f"{workspace_file.name}: {error}")
 
-    workspaces.sort(key=lambda workspace: workspace.get("order", 0))
+    workspaces.sort(key=lambda workspace: workspace["order"])
 
     return workspaces
 
 
 def save_workspace(workspace: dict, original_name: str | None = None) -> None:
     workspace_file = get_workspace_file(workspace["name"])
-    original_file = (
-        get_workspace_file(original_name) if original_name is not None else None
-    )
+    original_file = None
+    if original_name is not None:
+        original_file = get_workspace_file(original_name)
 
     if workspace_file.exists() and original_file != workspace_file:
         raise FileExistsError(f"Workspace '{workspace['name']}' already exists.")

@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
@@ -65,10 +66,93 @@ class WorkspaceServiceTests(unittest.TestCase):
         self.service.save_workspace({"name": "Original", "order": 1})
         self.service.save_workspace({"name": "Renamed", "order": 2}, "Original")
         self.assertFalse(self.service.get_workspace_file("Original").exists())
-        self.assertEqual(self.service.load_workspaces(), [{"name": "Renamed", "order": 2}])
+        self.assertEqual(self.service.load_workspaces(), [
+            {"name": "Renamed", "order": 2, "applications": []}
+        ])
         self.service.delete_workspace("Renamed")
         self.service.delete_workspace("Renamed")
         self.assertEqual(self.service.load_workspaces(), [])
+
+    def test_bad_files_do_not_hide_valid_workspaces_or_change_bytes(self) -> None:
+        self.service.save_workspace({"name": "Good", "order": 2})
+        self.service.save_workspace({"name": "First", "order": 1})
+        (self.directory / "broken.json").write_bytes(b'{broken')
+        (self.directory / "encoding.json").write_bytes(b'\xff')
+        (self.directory / "shape.json").write_text('[]', encoding="utf-8")
+        before = {p.name: p.read_bytes() for p in self.directory.iterdir()}
+        errors = []
+        loaded = self.service.load_workspaces(errors=errors)
+        self.assertEqual([w["name"] for w in loaded], ["First", "Good"])
+        self.assertEqual(len(errors), 3)
+        self.assertEqual(before, {p.name: p.read_bytes() for p in self.directory.iterdir()})
+
+    def test_invalid_workspace_fields_are_reported(self) -> None:
+        invalid = [
+            {"name": "../outside"},
+            {"name": "Other"},
+            {"name": "Test", "order": "first"},
+            {"name": "Test", "order": True},
+            {"name": "Test", "order": 1000},
+            {"name": "Test", "applications": {}},
+            {"name": "Test", "applications": [None]},
+            {"name": "Test", "applications": [{"name": "App", "path": ""}]},
+            {"name": "Test", "applications": [
+                {"name": "App", "path": "app.exe", "arguments": "--flag"}
+            ]},
+        ]
+        for record in invalid:
+            with self.subTest(record=record):
+                (self.directory / "test.json").write_text(json.dumps(record), encoding="utf-8")
+                errors = []
+                self.assertEqual(self.service.load_workspaces(errors=errors), [])
+                self.assertEqual(len(errors), 1)
+
+    def test_missing_optional_fields_are_normalized_in_memory_only(self) -> None:
+        self.service.save_workspace({"name": "Legacy"})
+        path = self.directory / "legacy.json"
+        before = path.read_bytes()
+        self.assertEqual(self.service.load_workspaces(), [
+            {"name": "Legacy", "order": 1, "applications": []}
+        ])
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_unreadable_file_does_not_hide_other_files(self) -> None:
+        self.service.save_workspace({"name": "Good"})
+        self.service.save_workspace({"name": "Locked"})
+        original_open = Path.open
+
+        def open_file(path, *args, **kwargs):
+            if path.name == "locked.json":
+                raise PermissionError("Access denied")
+            return original_open(path, *args, **kwargs)
+
+        errors = []
+        with patch.object(Path, "open", open_file):
+            loaded = self.service.load_workspaces(errors=errors)
+        self.assertEqual([w["name"] for w in loaded], ["Good"])
+        self.assertIn("locked.json", errors[0])
+
+    def test_directory_error_is_reported(self) -> None:
+        errors = []
+        with patch.object(Path, "iterdir", side_effect=PermissionError("denied")):
+            self.assertEqual(self.service.load_workspaces(errors=errors), [])
+        self.assertIn("directory", errors[0])
+
+    def test_repaired_file_loads_on_retry(self) -> None:
+        path = self.directory / "fixed.json"
+        path.write_text('{broken', encoding="utf-8")
+        errors = []
+        self.assertEqual(self.service.load_workspaces(errors=errors), [])
+        self.assertTrue(errors)
+        path.write_text('{"name": "Fixed"}', encoding="utf-8")
+        errors = []
+        self.assertEqual(self.service.load_workspaces(errors=errors)[0]["name"], "Fixed")
+        self.assertEqual(errors, [])
+
+    def test_errors_are_not_silently_ignored_without_error_list(self) -> None:
+        (self.directory / "broken.json").write_text('{broken', encoding="utf-8")
+        with self.assertRaises(ValueError):
+            self.service.load_workspaces()
 
 
 if __name__ == "__main__":

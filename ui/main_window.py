@@ -6,9 +6,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QListWidget,
+    QLabel,
 )
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, Qt
 
 from services.launcher_service import (
     launch_workspace,
@@ -45,6 +46,18 @@ class MainWindow(QMainWindow):
 
         self.workspace_list = QListWidget()
         layout.addWidget(self.workspace_list)
+
+        self.workspace_load_warning = QLabel()
+        self.workspace_load_warning.setTextFormat(Qt.TextFormat.PlainText)
+        self.workspace_load_warning.setWordWrap(True)
+        self.workspace_load_warning.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        layout.addWidget(self.workspace_load_warning)
+
+        reload_button = QPushButton("Reload Workspaces")
+        reload_button.clicked.connect(self.refresh_workspaces)
+        layout.addWidget(reload_button)
 
         create_workspace_button = QPushButton("Create Workspace")
         layout.addWidget(create_workspace_button)
@@ -109,10 +122,21 @@ class MainWindow(QMainWindow):
         self.refresh_workspaces()
 
     def refresh_workspaces(self) -> None:
+        errors = []
+        workspaces = load_workspaces(errors=errors)
         self.workspace_list.clear()
-        self.workspaces = load_workspaces()
+        self.workspaces = workspaces
         for workspace in self.workspaces:
             self.workspace_list.addItem(workspace["name"])
+        if errors:
+            message = "Some workspaces could not be loaded. Files were not changed. "
+            message += "Fix the listed files, then click Reload Workspaces.\n\n"
+            message += "\n".join(errors)
+            self.workspace_load_warning.setText(message)
+            self.workspace_load_warning.show()
+        else:
+            self.workspace_load_warning.clear()
+            self.workspace_load_warning.hide()
 
     def get_selected_workspace(self) -> dict | None:
         row = self.workspace_list.currentRow()
