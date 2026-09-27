@@ -280,9 +280,6 @@ class MainWindow(QMainWindow):
         self.manager_action.triggered.connect(self.show_workspace_manager)
         self.history_action = self.workspace_menu.addAction("Workspace History")
         self.history_action.triggered.connect(self.show_history)
-        self.workspace_menu.addSeparator()
-        self.reload_action = self.workspace_menu.addAction("Reload Workspaces")
-        self.reload_action.triggered.connect(self.refresh_workspaces)
 
         self.updates = self.help_menu.addAction("Check for Updates")
         self.updates.triggered.connect(self.check_for_updates)
@@ -554,7 +551,7 @@ class MainWindow(QMainWindow):
         self.workspace_scroll.setVisible(bool(workspaces) or bool(errors))
         if errors:
             message = "Some workspaces could not be loaded. Files were not changed. "
-            message += "Fix the listed files, then choose Workspaces > Reload Workspaces.\n\n"
+            message += "Fix the listed files, then restart Workspace Launcher.\n\n"
             message += "\n".join(errors)
             self.workspace_load_warning.setText(message)
             self.workspace_load_warning.show()
