@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QFormLayout,
     QLineEdit,
+    QLabel,
     QMessageBox,
     QPushButton,
     QVBoxLayout,
@@ -48,6 +49,13 @@ class ApplicationEditor(QDialog):
         self.path_input = QLineEdit()
         self.path_input.setText(self.application["path"])
 
+        self.arguments_input = QLineEdit()
+        self.arguments_input.setPlaceholderText("Optional flags, for example: --new-window --wait")
+        self.original_arguments_text = " ".join(self.application.get("arguments", []))
+        self.arguments_input.setText(self.original_arguments_text)
+        arguments_hint = QLabel("Separate arguments with spaces. Quoted arguments are not supported.")
+        arguments_hint.setWordWrap(True)
+
         self.browse_button = QPushButton("Browse")
         self.browse_button.setObjectName("secondaryButton")
         self.browse_button.clicked.connect(self.browse_item)
@@ -56,6 +64,8 @@ class ApplicationEditor(QDialog):
         form_layout.addRow("Item Type:", self.item_type_input)
         form_layout.addRow("Display Name:", self.name_input)
         form_layout.addRow("Path or URL:", self.path_input)
+        form_layout.addRow("Arguments:", self.arguments_input)
+        form_layout.addRow("", arguments_hint)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
@@ -109,6 +119,7 @@ class ApplicationEditor(QDialog):
 
         self.path_input.setPlaceholderText(placeholders[item_type])
         self.browse_button.setEnabled(item_type != "website")
+        self.arguments_input.setEnabled(item_type == "application")
 
     def browse_item(self) -> None:
         item_type = self.item_type_input.currentData()
@@ -140,6 +151,13 @@ class ApplicationEditor(QDialog):
             "application" if item_type == "application" else "resource"
         )
 
+        if item_type == "application":
+            arguments_text = self.arguments_input.text()
+            if arguments_text != self.original_arguments_text:
+                application["arguments"] = arguments_text.split()
+        else:
+            application.pop("arguments", None)
+
         return application
 
     def validate_and_accept(self) -> None:
@@ -152,6 +170,15 @@ class ApplicationEditor(QDialog):
         if not path:
             QMessageBox.warning(self, "Warning", "Enter a path or URL.")
             return
+
+        arguments_text = self.arguments_input.text()
+        if self.item_type_input.currentData() == "application":
+            if arguments_text != self.original_arguments_text and ('"' in arguments_text or "'" in arguments_text):
+                QMessageBox.warning(self, "Unsupported Arguments", "Use space-separated arguments without quotes. Arguments containing spaces are not supported by this editor yet.")
+                return
+            if "\x00" in arguments_text:
+                QMessageBox.warning(self, "Invalid Arguments", "Arguments cannot contain null characters.")
+                return
 
         if self.item_type_input.currentData() == "website":
             try:
