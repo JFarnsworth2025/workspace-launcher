@@ -14,6 +14,11 @@ DEFAULT_SETTINGS = {
 }
 
 
+def first_run_required() -> bool:
+    settings = load_settings()
+    return not settings["greeting_name"].strip()
+
+
 def load_settings() -> dict:
     settings = DEFAULT_SETTINGS.copy()
 

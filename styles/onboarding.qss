@@ -1,0 +1,70 @@
+/*==========================================================
+    First-run Welcome
+==========================================================*/
+
+#onboardingWindow {
+    background-color: #202225;
+}
+
+#onboardingTitle {
+    color: #F4F6F8;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+#onboardingSubtitle,
+#onboardingDescription {
+    color: #9CA3AF;
+    font-size: 12px;
+}
+
+#onboardingSection {
+    background-color: #2B2D31;
+    border: 1px solid #434852;
+    border-radius: 10px;
+}
+
+#onboardingSectionTitle {
+    color: #F4F6F8;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#onboardingNameInput,
+#settingsNameInput {
+    min-height: 22px;
+    padding: 8px 10px;
+    color: #F4F6F8;
+    background-color: #202225;
+    border: 1px solid #535964;
+    border-radius: 7px;
+    selection-background-color: #3EA6FF;
+}
+
+#onboardingNameInput:focus,
+#settingsNameInput:focus {
+    border-color: #3EA6FF;
+}
+
+#onboardingCheckbox {
+    color: #E2E8F0;
+    font-size: 13px;
+    spacing: 10px;
+    padding: 4px 0;
+}
+
+#onboardingCheckbox::indicator {
+    width: 18px;
+    height: 18px;
+    background-color: #202225;
+    border: 1px solid #5C6470;
+    border-radius: 5px;
+}
+
+#onboardingCheckbox::indicator:checked {
+    background-color: #3EA6FF;
+    border-color: #3EA6FF;
+}
+
+
+

@@ -1,9 +1,13 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication,
+    QDialog,
+    QMessageBox,
 )
 from ui.main_window import MainWindow
 from config import PROJECT_ROOT
+from ui.onboarding_window import OnboardingWindow
+from services.settings_service import first_run_required
 
 
 def main() -> None:
@@ -22,10 +26,27 @@ def main() -> None:
         "history.qss",
         "workspace_manager.qss",
         "settings.qss",
+        "onboarding.qss",
     ]:
         with (PROJECT_ROOT / "styles" / filename).open(encoding="utf-8") as file:
             stylesheet += file.read() + "\n"
     app.setStyleSheet(stylesheet)
+
+    try:
+        needs_setup = first_run_required()
+    except (OSError, ValueError) as error:
+        QMessageBox.warning(
+            None,
+            "Could Not Load Settings",
+            "Startup stopped because settings could not be read. "
+            "Your settings file was not changed.\n\n" + str(error),
+        )
+        return
+
+    if needs_setup:
+        onboarding_window = OnboardingWindow()
+        if onboarding_window.exec() != QDialog.DialogCode.Accepted:
+            return
 
     window = MainWindow()
     window.show()
