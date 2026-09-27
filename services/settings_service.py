@@ -42,6 +42,8 @@ def load_settings() -> dict:
         raise ValueError("The close to tray setting must be true or false.")
     if type(settings["launch_on_startup"]) is not bool:
         raise ValueError("The launch on startup setting must be true or false.")
+    if type(settings["check_for_updates"]) is not bool:
+        raise ValueError("The update check setting must be true or false.")
     return settings
 
 

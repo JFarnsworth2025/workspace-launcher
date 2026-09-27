@@ -58,6 +58,10 @@ class SettingsWindow(QDialog):
         self.launch_on_startup_checkbox.setObjectName("settingsCheckbox")
         self.launch_on_startup_checkbox.setChecked(self.settings["launch_on_startup"])
 
+        self.check_for_updates_checkbox = QCheckBox("Automatically check for updates")
+        self.check_for_updates_checkbox.setObjectName("settingsCheckbox")
+        self.check_for_updates_checkbox.setChecked(self.settings["check_for_updates"])
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
@@ -76,6 +80,7 @@ class SettingsWindow(QDialog):
         layout.addWidget(self.quote_checkbox)
         layout.addWidget(self.tray_checkbox)
         layout.addWidget(self.launch_on_startup_checkbox)
+        layout.addWidget(self.check_for_updates_checkbox)
         layout.addWidget(buttons)
 
     def save(self) -> None:
@@ -95,6 +100,7 @@ class SettingsWindow(QDialog):
         settings["motivation_quote"] = self.quote_checkbox.isChecked()
         settings["close_to_tray"] = self.tray_checkbox.isChecked()
         settings["launch_on_startup"] = self.launch_on_startup_checkbox.isChecked()
+        settings["check_for_updates"] = self.check_for_updates_checkbox.isChecked()
         settings["close_applications_on_end"] = (
             self.close_applications_checkbox.isChecked()
         )

@@ -6,6 +6,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 APP_NAME = "Workspace Launcher"
 APP_AUTHOR = "Pariven"
 APP_VERSION = "0.1.0"
+GITHUB_OWNER = "JFarnsworth2025"
+GITHUB_REPOSITORY = "workspace-launcher"
 
 APP_DATA_DIR = Path(os.environ["LOCALAPPDATA"]) / APP_AUTHOR / APP_NAME
 

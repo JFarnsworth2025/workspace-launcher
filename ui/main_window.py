@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QPushButton,
 )
 
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QTimer, Qt, QUrl
 
 from services.launcher_service import (
     launch_workspace,
@@ -27,8 +27,8 @@ from services.launcher_service import (
     active_session,
 )
 
-from config import APP_NAME, APP_VERSION, PROJECT_ROOT
-from PySide6.QtGui import QIcon, QAction
+from config import APP_NAME, APP_VERSION, PROJECT_ROOT, GITHUB_OWNER, GITHUB_REPOSITORY
+from PySide6.QtGui import QIcon, QAction, QDesktopServices
 from ui.history_window import HistoryWindow, format_record
 from ui.header_panel import HeaderPanel
 from ui.workspace_card import WorkspaceCard
@@ -42,6 +42,7 @@ from ui.verse_card import VerseCard
 from services.quote_service import get_daily_quotes
 from ui.quote_card import QuoteCard
 from services.power_event_service import PowerEventService
+from ui.update_worker import UpdateWorker
 
 
 WORKSPACES_PER_ROW = 3
@@ -77,6 +78,7 @@ class MainWindow(QMainWindow):
         except (OSError, ValueError):
             settings_error = True
 
+        self.settings = settings
         self.close_to_tray = settings.get("close_to_tray", False)
         self.header = HeaderPanel(greeting_name)
         self.header.setStyleSheet(
@@ -139,6 +141,7 @@ class MainWindow(QMainWindow):
         self.refresh_last_workspace()
         self.refresh_session_status()
         self.setup_power_events()
+        QTimer.singleShot(0, self.check_for_updates_automatic)
 
     def setup_power_events(self) -> None:
         self.automatic_pause_reasons = set()
@@ -271,6 +274,9 @@ class MainWindow(QMainWindow):
         self.reload_action = self.workspace_menu.addAction("Reload Workspaces")
         self.reload_action.triggered.connect(self.refresh_workspaces)
 
+        self.updates = self.help_menu.addAction("Check for Updates")
+        self.updates.triggered.connect(self.check_for_updates)
+        self.help_menu.addSeparator()
         self.about_action = self.help_menu.addAction("About Workspace Launcher")
         self.about_action.triggered.connect(self.show_about)
 
@@ -344,6 +350,10 @@ class MainWindow(QMainWindow):
                 "Workspace Still Active",
                 "End the current workspace before exiting so its session history can be saved.",
             )
+            event.ignore()
+            return
+        if hasattr(self, "update_worker") and self.update_worker.isRunning():
+            QMessageBox.information(self, "Update Check Running", "Please wait for the update check to finish, then exit again.")
             event.ignore()
             return
         self.tray_icon.hide()
@@ -442,10 +452,76 @@ class MainWindow(QMainWindow):
 
         settings_window = SettingsWindow(settings, self)
         if settings_window.exec() == QDialog.DialogCode.Accepted:
+            self.settings = settings_window.settings
             self.close_to_tray = settings_window.settings["close_to_tray"]
             self.header.set_greeting_name(settings_window.settings["greeting_name"])
             self.refresh_verse(settings_window.settings)
             self.refresh_quote(settings_window.settings)
+
+    def check_for_updates(self) -> None:
+        self.start_update_check(automatic=False)
+
+    def check_for_updates_automatic(self) -> None:
+        if self.settings.get("check_for_updates", False):
+            self.start_update_check(automatic=True)
+
+    def start_update_check(self, automatic: bool) -> None:
+        if hasattr(self, "update_worker") and self.update_worker.isRunning():
+            return
+        self.update_check_is_automatic = automatic
+        self.update_worker = UpdateWorker(GITHUB_OWNER, GITHUB_REPOSITORY)
+        self.update_worker.result_ready.connect(self.handle_update_result)
+        self.update_worker.start()
+
+    def handle_update_result(self, result: dict) -> None:
+        if self.update_check_is_automatic:
+            if "error" in result or not result["available"]:
+                return
+
+        self.show_update_result(result)
+
+    def show_update_result(self, result: dict) -> None:
+        if "error" in result:
+            message = QMessageBox(self)
+            message.setIcon(QMessageBox.Icon.Warning)
+            message.setWindowTitle("Unable to Check for Updates")
+            message.setText("Workspace Launcher could not contact GitHub.")
+            message.setInformativeText(
+                "Check your internet connection and try again in a moment."
+            )
+            message.setDetailedText(result["error"])
+            message.setStandardButtons(QMessageBox.StandardButton.Ok)
+            message.exec()
+            return
+
+        if not result["available"]:
+            QMessageBox.information(
+                self,
+                "Workspace Launcher Is Up to Date",
+                f"You are using the latest version ({result['current_version']}).",
+            )
+            return
+
+        message = QMessageBox(self)
+        message.setIcon(QMessageBox.Icon.Information)
+        message.setWindowTitle("Workspace Launcher Update Available")
+        message.setText(f"Version {result['latest_version']} is available.")
+        message.setInformativeText(
+            f"You currently have version {result['current_version']}."
+        )
+
+        if result["release_notes"]:
+            message.setDetailedText(result["release_notes"])
+
+        open_button = message.addButton(
+            "Open Release",
+            QMessageBox.ButtonRole.AcceptRole,
+        )
+        message.addButton(QMessageBox.StandardButton.Close)
+        message.exec()
+
+        if message.clickedButton() is open_button:
+            QDesktopServices.openUrl(QUrl(result["release_url"]))
 
     def refresh_workspaces(self) -> None:
         errors = []
