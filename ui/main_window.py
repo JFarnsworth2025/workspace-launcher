@@ -50,8 +50,10 @@ WORKSPACES_PER_ROW = 3
 
 class MainWindow(QMainWindow):
 
-    def __init__(self) -> None:
+    def __init__(self, progress_callback=None) -> None:
         super().__init__()
+        self.progress_callback = progress_callback
+        self.report_progress(12, "Loading settings...")
 
         self.is_quitting = False
         self.close_checks = 0
@@ -80,6 +82,7 @@ class MainWindow(QMainWindow):
 
         self.settings = settings
         self.close_to_tray = settings.get("close_to_tray", False)
+        self.report_progress(28, "Building the dashboard...")
         self.header = HeaderPanel(greeting_name)
         self.header.setStyleSheet(
             (PROJECT_ROOT / "styles/header.qss").read_text(encoding="utf-8")
@@ -92,6 +95,7 @@ class MainWindow(QMainWindow):
                 "Settings could not be loaded. Open Settings for details."
             )
 
+        self.report_progress(42, "Loading daily content...")
         self.quotes_verses = QHBoxLayout()
         layout.addLayout(self.quotes_verses)
         self.verse_card = None
@@ -99,6 +103,7 @@ class MainWindow(QMainWindow):
         self.quote_card = None
         self.refresh_quote(settings)
 
+        self.report_progress(65, "Creating workspace controls...")
         self.workspace_cards = []
         self.selected_row = -1
         self.workspace_manager = None
@@ -137,11 +142,16 @@ class MainWindow(QMainWindow):
         self.session_timer.timeout.connect(self.refresh_session_status)
         self.session_timer.start()
 
+        self.report_progress(80, "Loading workspaces and history...")
         self.refresh_workspaces()
         self.refresh_last_workspace()
         self.refresh_session_status()
         self.setup_power_events()
-        QTimer.singleShot(0, self.check_for_updates_automatic)
+        self.report_progress(95, "Finishing startup...")
+
+    def report_progress(self, value: int, message: str) -> None:
+        if self.progress_callback:
+            self.progress_callback(value, message)
 
     def setup_power_events(self) -> None:
         self.automatic_pause_reasons = set()
