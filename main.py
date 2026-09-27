@@ -7,7 +7,8 @@ from PySide6.QtWidgets import (
 from ui.main_window import MainWindow
 from config import PROJECT_ROOT
 from ui.onboarding_window import OnboardingWindow
-from services.settings_service import first_run_required
+from services.settings_service import first_run_required, load_settings
+from services.startup_service import sync_startup
 
 
 def main() -> None:
@@ -50,6 +51,11 @@ def main() -> None:
         onboarding_window = OnboardingWindow()
         if onboarding_window.exec() != QDialog.DialogCode.Accepted:
             return
+
+    try:
+        sync_startup(load_settings()["launch_on_startup"])
+    except (OSError, ValueError) as error:
+        QMessageBox.warning(None, "Startup Setting Could Not Be Applied", str(error))
 
     window = MainWindow()
     window.show()

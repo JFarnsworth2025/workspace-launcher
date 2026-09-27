@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from services.settings_service import save_settings
+from services.startup_service import sync_startup
 
 
 class SettingsWindow(QDialog):
@@ -53,6 +54,10 @@ class SettingsWindow(QDialog):
         self.tray_checkbox.setObjectName("settingsCheckbox")
         self.tray_checkbox.setChecked(self.settings["close_to_tray"])
 
+        self.launch_on_startup_checkbox = QCheckBox("Launch Workspace Launcher when Windows starts")
+        self.launch_on_startup_checkbox.setObjectName("settingsCheckbox")
+        self.launch_on_startup_checkbox.setChecked(self.settings["launch_on_startup"])
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
@@ -70,6 +75,7 @@ class SettingsWindow(QDialog):
         layout.addWidget(self.verse_checkbox)
         layout.addWidget(self.quote_checkbox)
         layout.addWidget(self.tray_checkbox)
+        layout.addWidget(self.launch_on_startup_checkbox)
         layout.addWidget(buttons)
 
     def save(self) -> None:
@@ -88,13 +94,25 @@ class SettingsWindow(QDialog):
         settings["bible_verse"] = self.verse_checkbox.isChecked()
         settings["motivation_quote"] = self.quote_checkbox.isChecked()
         settings["close_to_tray"] = self.tray_checkbox.isChecked()
+        settings["launch_on_startup"] = self.launch_on_startup_checkbox.isChecked()
         settings["close_applications_on_end"] = (
             self.close_applications_checkbox.isChecked()
         )
         try:
+            sync_startup(settings["launch_on_startup"])
+        except OSError as error:
+            QMessageBox.warning(self, "Startup Setting Could Not Be Changed", str(error))
+            return
+
+        try:
             save_settings(settings)
         except (OSError, ValueError) as error:
-            QMessageBox.warning(self, "Could Not Save Settings", str(error))
+            message = str(error)
+            try:
+                sync_startup(self.settings["launch_on_startup"])
+            except OSError as restore_error:
+                message += "\n\nThe Windows startup setting could not be restored: " + str(restore_error)
+            QMessageBox.warning(self, "Could Not Save Settings", message)
             return
 
         self.settings = settings
