@@ -4,8 +4,8 @@ from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
     QWidget,
-    QListWidget,
-    QListWidgetItem,
+    QGridLayout,
+    QScrollArea,
     QLabel,
     QHBoxLayout,
     QFrame,
@@ -38,6 +38,9 @@ from services.bible_services import get_daily_verse
 from ui.verse_card import VerseCard
 from services.quote_service import get_daily_quotes
 from ui.quote_card import QuoteCard
+
+
+WORKSPACES_PER_ROW = 3
 
 
 class MainWindow(QMainWindow):
@@ -88,17 +91,27 @@ class MainWindow(QMainWindow):
         self.quote_card = None
         self.refresh_quote(settings)
 
-        self.workspace_list = QListWidget()
         self.workspace_cards = []
+        self.selected_row = -1
         self.workspace_manager = None
-        self.workspace_list.setSpacing(8)
+        self.workspace_container = QFrame()
+        self.workspace_container.setFrameShape(QFrame.Shape.NoFrame)
+        self.button_layout = QGridLayout(self.workspace_container)
+        self.button_layout.setHorizontalSpacing(20)
+        self.button_layout.setVerticalSpacing(20)
+        self.button_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        for column in range(WORKSPACES_PER_ROW):
+            self.button_layout.setColumnStretch(column, 1)
         card_styles = (PROJECT_ROOT / "styles/workspace_cards.qss").read_text(encoding="utf-8")
         card_styles += (PROJECT_ROOT / "styles/typography.qss").read_text(encoding="utf-8")
-        self.workspace_list.setStyleSheet(card_styles)
+        self.workspace_container.setStyleSheet(card_styles)
+        self.workspace_scroll = QScrollArea()
+        self.workspace_scroll.setWidgetResizable(True)
+        self.workspace_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.workspace_scroll.setWidget(self.workspace_container)
         self.empty_workspace_state = self.create_empty_workspace_state()
         layout.addWidget(self.empty_workspace_state, 0, Qt.AlignmentFlag.AlignHCenter)
-        layout.addWidget(self.workspace_list)
-        self.workspace_list.currentRowChanged.connect(self.refresh_session_status)
+        layout.addWidget(self.workspace_scroll)
 
         self.workspace_load_warning = QLabel()
         self.workspace_load_warning.setTextFormat(Qt.TextFormat.PlainText)
@@ -267,7 +280,8 @@ class MainWindow(QMainWindow):
             return
         for row in range(len(self.workspaces)):
             if self.workspaces[row]["name"] == workspace["name"]:
-                self.workspace_list.setCurrentRow(row)
+                self.selected_row = row
+                self.refresh_session_status()
                 return
 
     def refresh_last_workspace(self) -> None:
@@ -306,19 +320,22 @@ class MainWindow(QMainWindow):
     def refresh_workspaces(self) -> None:
         errors = []
         workspaces = load_workspaces(errors=errors)
+        while self.button_layout.count():
+            item = self.button_layout.takeAt(0)
+            item.widget().hide()
+            item.widget().deleteLater()
         self.workspace_cards = []
-        self.workspace_list.clear()
+        self.selected_row = -1
         self.workspaces = workspaces
-        for workspace in self.workspaces:
+        for index, workspace in enumerate(self.workspaces):
             card = WorkspaceCard(workspace)
             card.clicked.connect(self.select_workspace_card)
-            item = QListWidgetItem()
-            item.setSizeHint(card.sizeHint())
-            self.workspace_list.addItem(item)
-            self.workspace_list.setItemWidget(item, card)
+            row = index // WORKSPACES_PER_ROW
+            column = index % WORKSPACES_PER_ROW
+            self.button_layout.addWidget(card, row, column, Qt.AlignmentFlag.AlignTop)
             self.workspace_cards.append(card)
         self.empty_workspace_state.setVisible(not workspaces and not errors)
-        self.workspace_list.setVisible(bool(workspaces) or bool(errors))
+        self.workspace_scroll.setVisible(bool(workspaces) or bool(errors))
         if errors:
             message = "Some workspaces could not be loaded. Files were not changed. "
             message += "Fix the listed files, then choose Workspaces > Reload Workspaces.\n\n"
@@ -331,7 +348,7 @@ class MainWindow(QMainWindow):
         self.refresh_session_status()
 
     def get_selected_workspace(self) -> dict | None:
-        row = self.workspace_list.currentRow()
+        row = self.selected_row
         if row == -1:
             QMessageBox.warning(self, "Warning", "Please select a workspace first.")
             return None
@@ -373,7 +390,7 @@ class MainWindow(QMainWindow):
         name = get_active_workspace_name()
         closing = self.close_timer.isActive()
 
-        row = self.workspace_list.currentRow()
+        row = self.selected_row
         selected_name = name
         if name is None and row >= 0:
             selected_name = self.workspaces[row]["name"]
@@ -382,7 +399,7 @@ class MainWindow(QMainWindow):
             card.set_locked(name is not None)
 
         if name is None:
-            row = self.workspace_list.currentRow()
+            row = self.selected_row
             if row >= 0:
                 self.header.set_selected_workspace(self.workspaces[row]["name"])
             else:
