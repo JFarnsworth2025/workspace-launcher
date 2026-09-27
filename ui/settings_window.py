@@ -41,6 +41,10 @@ class SettingsWindow(QDialog):
         )
         explanation.setWordWrap(True)
 
+        self.verse_checkbox = QCheckBox("Show daily Bible verse")
+        self.verse_checkbox.setObjectName("settingsCheckbox")
+        self.verse_checkbox.setChecked(self.settings["bible_verse"])
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
@@ -55,6 +59,7 @@ class SettingsWindow(QDialog):
         layout.addWidget(self.name_input)
         layout.addWidget(self.close_applications_checkbox)
         layout.addWidget(explanation)
+        layout.addWidget(self.verse_checkbox)
         layout.addWidget(buttons)
 
     def save(self) -> None:
@@ -70,6 +75,7 @@ class SettingsWindow(QDialog):
 
         settings = self.settings.copy()
         settings["greeting_name"] = greeting_name
+        settings["bible_verse"] = self.verse_checkbox.isChecked()
         settings["close_applications_on_end"] = (
             self.close_applications_checkbox.isChecked()
         )

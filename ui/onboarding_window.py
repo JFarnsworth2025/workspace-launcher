@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
+    QCheckBox,
     QFrame,
     QLabel,
     QLineEdit,
@@ -21,7 +22,7 @@ class OnboardingWindow(QDialog):
         self.setWindowTitle("Welcome to Workspace Launcher")
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setModal(True)
-        self.setFixedSize(560, 350)
+        self.setFixedSize(560, 400)
 
         self.title_label = QLabel("Make Workspace Launcher yours")
         self.title_label.setObjectName("onboardingTitle")
@@ -49,6 +50,10 @@ class OnboardingWindow(QDialog):
         self.name_input.setPlaceholderText("Enter your name")
         self.name_input.setMaxLength(40)
 
+        self.verse_checkbox = QCheckBox("Show daily Bible verse")
+        self.verse_checkbox.setObjectName("onboardingCheckbox")
+        self.verse_checkbox.setChecked(True)
+
         self.continue_button = QPushButton("Continue to Workspace Launcher")
         self.continue_button.setObjectName("primaryButton")
         self.continue_button.clicked.connect(self.save_profile)
@@ -66,6 +71,7 @@ class OnboardingWindow(QDialog):
         layout.addWidget(self.title_label)
         layout.addWidget(self.subtitle_label)
         layout.addWidget(self.name_frame)
+        layout.addWidget(self.verse_checkbox)
         layout.addStretch()
         layout.addWidget(self.continue_button)
 
@@ -87,6 +93,7 @@ class OnboardingWindow(QDialog):
         try:
             settings = load_settings()
             settings["greeting_name"] = greeting_name
+            settings["bible_verse"] = self.verse_checkbox.isChecked()
             save_settings(settings)
         except (OSError, ValueError) as error:
             QMessageBox.warning(self, "Could Not Save Profile", str(error))

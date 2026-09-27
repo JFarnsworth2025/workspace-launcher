@@ -1,0 +1,47 @@
+/*==========================================================
+    Verse Card
+==========================================================*/
+
+
+#verseCard {
+
+    background-color: #2B2D31;
+
+    border: 1px solid #434852;
+
+    border-radius: 10px;
+
+}
+
+
+#verseTitle {
+
+    color: white;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+}
+
+
+#verseReference {
+
+    color: #3EA6FF;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+}
+
+
+#verseText {
+
+    color: #F4F6F8;
+
+    font-size: 11px;
+
+}
+
+

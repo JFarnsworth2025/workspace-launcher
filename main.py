@@ -27,6 +27,7 @@ def main() -> None:
         "workspace_manager.qss",
         "settings.qss",
         "onboarding.qss",
+        "verse_card.qss",
     ]:
         with (PROJECT_ROOT / "styles" / filename).open(encoding="utf-8") as file:
             stylesheet += file.read() + "\n"

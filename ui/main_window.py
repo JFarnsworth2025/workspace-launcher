@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QLabel,
+    QHBoxLayout,
 )
 
 from PySide6.QtCore import QTimer, Qt
@@ -31,6 +32,8 @@ from ui.settings_window import SettingsWindow
 from services.settings_service import load_settings
 from services.history_service import load_history
 from services.workspace_service import load_workspaces
+from services.bible_services import get_daily_verse
+from ui.verse_card import VerseCard
 
 
 class MainWindow(QMainWindow):
@@ -54,6 +57,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
 
         greeting_name = ""
+        settings = {"bible_verse": False}
         settings_error = False
         try:
             settings = load_settings()
@@ -72,6 +76,11 @@ class MainWindow(QMainWindow):
             self.header.greeting_label.setText(
                 "Settings could not be loaded. Open Settings for details."
             )
+
+        self.quotes_verses = QHBoxLayout()
+        layout.addLayout(self.quotes_verses)
+        self.verse_card = None
+        self.refresh_verse(settings)
 
         self.workspace_list = QListWidget()
         self.workspace_cards = []
@@ -125,6 +134,17 @@ class MainWindow(QMainWindow):
         else:
             self.toggle_pause()
 
+    def refresh_verse(self, settings: dict) -> None:
+        if self.verse_card is not None:
+            self.quotes_verses.removeWidget(self.verse_card)
+            self.verse_card.deleteLater()
+            self.verse_card = None
+
+        if settings["bible_verse"]:
+            daily_verse = get_daily_verse()
+            self.verse_card = VerseCard(daily_verse)
+            self.quotes_verses.insertWidget(0, self.verse_card, 2)
+
     def show_workspace_manager(self) -> None:
         if self.workspace_manager is None:
             self.workspace_manager = WorkspaceWindow(self)
@@ -173,6 +193,7 @@ class MainWindow(QMainWindow):
         settings_window = SettingsWindow(settings, self)
         if settings_window.exec() == QDialog.DialogCode.Accepted:
             self.header.set_greeting_name(settings_window.settings["greeting_name"])
+            self.refresh_verse(settings_window.settings)
 
     def refresh_workspaces(self) -> None:
         errors = []
