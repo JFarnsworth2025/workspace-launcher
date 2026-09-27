@@ -18,6 +18,7 @@ class ApplicationEditor(QDialog):
 
     def __init__(self, application: dict | None = None) -> None:
         super().__init__()
+        self.setObjectName("applicationEditor")
 
         self.application = (
             application.copy()
@@ -48,6 +49,7 @@ class ApplicationEditor(QDialog):
         self.path_input.setText(self.application["path"])
 
         self.browse_button = QPushButton("Browse")
+        self.browse_button.setObjectName("secondaryButton")
         self.browse_button.clicked.connect(self.browse_item)
 
         form_layout = QFormLayout()
@@ -61,6 +63,8 @@ class ApplicationEditor(QDialog):
         )
 
         buttons.accepted.connect(self.validate_and_accept)
+        buttons.button(QDialogButtonBox.StandardButton.Save).setObjectName("primaryButton")
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setObjectName("secondaryButton")
         buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)

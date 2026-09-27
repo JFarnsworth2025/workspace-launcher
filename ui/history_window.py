@@ -45,16 +45,19 @@ def format_record(record: object) -> tuple[str, str, str, str]:
 class HistoryWindow(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.setObjectName("historyWindow")
         self.setWindowTitle("Workspace History")
         self.resize(950, 500)
 
         layout = QVBoxLayout(self)
         self.summary = QLabel()
+        self.summary.setObjectName("historySummary")
         self.summary.setTextFormat(Qt.TextFormat.PlainText)
         self.summary.setWordWrap(True)
         layout.addWidget(self.summary)
 
         self.table = QTableWidget(0, 4)
+        self.table.setObjectName("historyTable")
         self.table.setHorizontalHeaderLabels(
             ["Workspace", "Started", "Ended", "Active duration"]
         )
@@ -69,9 +72,11 @@ class HistoryWindow(QDialog):
         layout.addWidget(self.table)
 
         refresh_button = QPushButton("Refresh")
+        refresh_button.setObjectName("secondaryButton")
         refresh_button.clicked.connect(self.refresh)
         layout.addWidget(refresh_button)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons.button(QDialogButtonBox.StandardButton.Close).setObjectName("secondaryButton")
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
         self.refresh()

@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
         self.resize(1000, 700)
 
         central_widget = QWidget()
+        central_widget.setObjectName("mainDashboard")
 
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
@@ -105,6 +106,9 @@ class MainWindow(QMainWindow):
         settings_button = QPushButton("Settings")
         layout.addWidget(settings_button)
         settings_button.clicked.connect(self.show_settings)
+
+        for button in (reload_button, manager_button, history_button, settings_button):
+            button.setObjectName("secondaryButton")
 
         self.session_timer = QTimer(self)
         self.session_timer.setInterval(1000)

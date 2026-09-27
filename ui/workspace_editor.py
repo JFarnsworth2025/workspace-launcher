@@ -17,6 +17,7 @@ class WorkspaceEditor(QDialog):
 
     def __init__(self, workspace: dict | None = None) -> None:
         super().__init__()
+        self.setObjectName("workspaceEditor")
 
         self.workspace = (
             workspace.copy()
@@ -48,9 +49,12 @@ class WorkspaceEditor(QDialog):
         form_layout.addRow("Display order:", self.order_input)
 
         self.application_list = QListWidget()
+        self.application_list.setObjectName("workspaceEditorApplications")
         add_button = QPushButton("Add Item")
         edit_button = QPushButton("Edit Item")
         remove_button = QPushButton("Remove Item")
+        for button in (add_button, edit_button, remove_button):
+            button.setObjectName("secondaryButton")
 
         add_button.clicked.connect(self.add_application)
         edit_button.clicked.connect(self.edit_application)
@@ -66,6 +70,8 @@ class WorkspaceEditor(QDialog):
             | QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
+        buttons.button(QDialogButtonBox.StandardButton.Save).setObjectName("primaryButton")
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setObjectName("secondaryButton")
         buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)

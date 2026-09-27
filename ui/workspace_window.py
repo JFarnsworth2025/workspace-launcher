@@ -77,6 +77,7 @@ class WorkspaceWindow(QMainWindow):
         self.remove_button = QPushButton("Remove Workspace")
         self.close_button = QPushButton("Close")
         self.reload_button = QPushButton("Reload")
+        self.reload_button.setObjectName("secondaryButton")
         self.reload_button.clicked.connect(self.reload_workspaces)
         self.load_warning = QLabel()
         self.load_warning.setWordWrap(True)

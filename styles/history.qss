@@ -1,0 +1,68 @@
+/*==========================================================
+    Workspace History
+==========================================================*/
+
+#historyWindow {
+    background-color: #202225;
+}
+
+#historyTitle {
+    color: #F4F6F8;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+#historySummary {
+    background-color: #2B2D31;
+    color: #3EA6FF;
+    border: 1px solid #434852;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#historyTable {
+    background-color: #2B2D31;
+    alternate-background-color: #303238;
+    color: #F4F6F8;
+    border: 1px solid #434852;
+    border-radius: 10px;
+    padding: 1px;
+    outline: none;
+    selection-background-color: #404650;
+    selection-color: white;
+}
+
+#historyTable QHeaderView::section {
+    background-color: #33363D;
+    color: #C2C8D0;
+    border: none;
+    border-bottom: 1px solid #535964;
+    padding: 11px 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+#historyTable QTableCornerButton::section {
+    background-color: #33363D;
+    border: none;
+}
+
+#historyTable::item {
+    border: none;
+    border-bottom: 1px solid #3B4048;
+    padding: 8px 10px;
+}
+
+#historyTable::item:hover {
+    background-color: #3B4048;
+}
+
+#historyTable::item:selected {
+    background-color: #404650;
+    color: #F4F6F8;
+}
+
+
+

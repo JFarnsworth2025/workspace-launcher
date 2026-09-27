@@ -1,0 +1,64 @@
+/*==========================================================
+    Buttons
+==========================================================*/
+
+
+#primaryButton {
+
+    background-color: #3E4F66;
+
+    color: white;
+
+    border: 1px solid #5D7FA7;
+
+    border-radius: 8px;
+
+    padding: 6px 12px;
+
+}
+
+
+#primaryButton:hover {
+
+    background-color: #49617D;
+
+    border: 1px solid #63B8FF;
+
+}
+
+
+#primaryButton:pressed {
+
+    background-color: #324456;
+
+}
+
+
+#secondaryButton {
+    background-color: #3A3D44;
+
+    color: white;
+
+    border: 1px solid #535964;
+
+    border-radius: 8px;
+
+    padding: 6px 12px;
+
+}
+
+
+#secondaryButton:hover {
+    background-color: #454A52;
+
+    border: 1px solid #63B8FF;
+
+}
+
+
+#secondaryButton:pressed {
+    background-color: #2E3137;
+
+}
+
+

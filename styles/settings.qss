@@ -1,0 +1,67 @@
+/*==========================================================
+    Settings Window
+==========================================================*/
+
+#settingsWindow {
+    background-color: #202225;
+}
+
+#settingsTitle {
+    color: #F4F6F8;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+#settingsSubtitle {
+    color: #9CA3AF;
+    font-size: 12px;
+}
+
+#settingsSection {
+    background-color: #2B2D31;
+    border: 1px solid #434852;
+    border-radius: 10px;
+}
+
+#settingsSectionTitle {
+    color: #F4F6F8;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#settingsSectionDescription {
+    color: #9CA3AF;
+    font-size: 12px;
+}
+
+#settingsCheckbox {
+    color: #E2E8F0;
+    font-size: 13px;
+    spacing: 10px;
+    padding: 4px 0;
+}
+
+#settingsCheckbox::indicator {
+    width: 18px;
+    height: 18px;
+    background-color: #202225;
+    border: 1px solid #5C6470;
+    border-radius: 5px;
+}
+
+#settingsCheckbox::indicator:hover {
+    border-color: #63B8FF;
+}
+
+#settingsCheckbox::indicator:checked {
+    background-color: #3EA6FF;
+    border-color: #3EA6FF;
+}
+
+#settingsCheckbox::indicator:checked:hover {
+    background-color: #63B8FF;
+    border-color: #63B8FF;
+}
+
+
+
