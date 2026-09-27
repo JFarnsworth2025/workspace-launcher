@@ -21,7 +21,14 @@ def load_settings() -> dict:
         with SETTINGS_FILE.open("r", encoding="utf-8") as file:
             saved_settings = json.load(file)
 
+        if not isinstance(saved_settings, dict):
+            raise ValueError("Settings must contain a JSON object.")
         settings.update(saved_settings)
+
+    if not isinstance(settings["greeting_name"], str):
+        raise ValueError("The greeting name must be text.")
+    if type(settings["close_applications_on_end"]) is not bool:
+        raise ValueError("The close applications setting must be true or false.")
     return settings
 
 

@@ -23,6 +23,9 @@ from services.launcher_service import (
 from config import APP_NAME
 from ui.workspace_editor import WorkspaceEditor
 from ui.history_window import HistoryWindow
+from ui.settings_window import SettingsWindow
+from services.settings_service import load_settings
+from services.greeting_service import get_time_based_greeting
 from services.workspace_service import save_workspace, load_workspaces, delete_workspace
 
 
@@ -43,6 +46,19 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
+
+        self.greeting_label = QLabel()
+        self.greeting_label.setTextFormat(Qt.TextFormat.PlainText)
+        layout.addWidget(self.greeting_label)
+        try:
+            settings = load_settings()
+            self.greeting_label.setText(
+                get_time_based_greeting(settings["greeting_name"])
+            )
+        except (OSError, ValueError):
+            self.greeting_label.setText(
+                "Settings could not be loaded. Open Settings for details."
+            )
 
         self.workspace_list = QListWidget()
         layout.addWidget(self.workspace_list)
@@ -87,6 +103,10 @@ class MainWindow(QMainWindow):
         layout.addWidget(history_button)
         history_button.clicked.connect(self.show_history)
 
+        settings_button = QPushButton("Settings")
+        layout.addWidget(settings_button)
+        settings_button.clicked.connect(self.show_settings)
+
         self.session_timer = QTimer(self)
         self.session_timer.setInterval(1000)
         self.session_timer.timeout.connect(self.refresh_session_status)
@@ -98,6 +118,19 @@ class MainWindow(QMainWindow):
     def show_history(self) -> None:
         history_window = HistoryWindow(self)
         history_window.exec()
+
+    def show_settings(self) -> None:
+        try:
+            settings = load_settings()
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Could Not Load Settings", str(error))
+            return
+
+        settings_window = SettingsWindow(settings, self)
+        if settings_window.exec() == QDialog.DialogCode.Accepted:
+            self.greeting_label.setText(
+                get_time_based_greeting(settings_window.settings["greeting_name"])
+            )
 
     def create_workspace(self) -> None:
 
@@ -280,6 +313,18 @@ class MainWindow(QMainWindow):
         if answer != QMessageBox.StandardButton.Yes:
             return
 
+        default_choice = QMessageBox.StandardButton.No
+        try:
+            settings = load_settings()
+            if settings["close_applications_on_end"]:
+                default_choice = QMessageBox.StandardButton.Yes
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(
+                self,
+                "Could Not Load Settings",
+                "The default choice will leave applications open.\n\n" + str(error),
+            )
+
         close_choice = QMessageBox.question(
             self,
             "Close Applications",
@@ -291,7 +336,7 @@ class MainWindow(QMainWindow):
             QMessageBox.StandardButton.Yes
             | QMessageBox.StandardButton.No
             | QMessageBox.StandardButton.Cancel,
-            QMessageBox.StandardButton.No,
+            default_choice,
         )
 
         if close_choice == QMessageBox.StandardButton.Cancel:
