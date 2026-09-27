@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import (
     QMainWindow,
+    QSystemTrayIcon,
+    QMenu,
     QMessageBox,
     QDialog,
     QVBoxLayout,
@@ -25,7 +27,7 @@ from services.launcher_service import (
 )
 
 from config import APP_NAME, APP_VERSION, PROJECT_ROOT
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QAction
 from ui.history_window import HistoryWindow, format_record
 from ui.header_panel import HeaderPanel
 from ui.workspace_card import WorkspaceCard
@@ -48,6 +50,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
+        self.is_quitting = False
         self.close_checks = 0
         self.close_timer = QTimer(self)
         self.close_timer.setInterval(250)
@@ -72,6 +75,7 @@ class MainWindow(QMainWindow):
         except (OSError, ValueError):
             settings_error = True
 
+        self.close_to_tray = settings.get("close_to_tray", False)
         self.header = HeaderPanel(greeting_name)
         self.header.setStyleSheet(
             (PROJECT_ROOT / "styles/header.qss").read_text(encoding="utf-8")
@@ -122,6 +126,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.workspace_load_warning)
 
         self.create_navbar()
+        self.create_tray_icon()
 
         self.session_timer = QTimer(self)
         self.session_timer.setInterval(1000)
@@ -199,7 +204,7 @@ class MainWindow(QMainWindow):
         self.settings_action.triggered.connect(self.show_settings)
         self.file_menu.addSeparator()
         self.exit_action = self.file_menu.addAction("Exit Workspace Launcher")
-        self.exit_action.triggered.connect(self.close)
+        self.exit_action.triggered.connect(self.quit_application)
 
         self.manager_action = self.workspace_menu.addAction("Manage Workspaces")
         self.manager_action.triggered.connect(self.show_workspace_manager)
@@ -212,7 +217,70 @@ class MainWindow(QMainWindow):
         self.about_action = self.help_menu.addAction("About Workspace Launcher")
         self.about_action.triggered.connect(self.show_about)
 
+    def create_tray_icon(self) -> None:
+        self.tray_icon = QSystemTrayIcon(self.windowIcon(), self)
+        self.tray_icon.setToolTip("Workspace Launcher")
+
+        self.tray_menu = QMenu()
+
+        self.tray_open_action = QAction("Open Workspace Launcher", self)
+        self.tray_pause_action = QAction("Pause Workspace", self)
+        self.tray_end_action = QAction("End Workspace", self)
+        self.tray_exit_action = QAction("Exit Workspace Launcher", self)
+
+        self.tray_pause_action.setEnabled(False)
+        self.tray_end_action.setEnabled(False)
+
+        self.tray_menu.addAction(self.tray_open_action)
+        self.tray_menu.addSeparator()
+        self.tray_menu.addAction(self.tray_pause_action)
+        self.tray_menu.addAction(self.tray_end_action)
+        self.tray_menu.addSeparator()
+        self.tray_menu.addAction(self.tray_exit_action)
+
+        self.tray_icon.setContextMenu(self.tray_menu)
+
+        self.tray_open_action.triggered.connect(self.show_from_tray)
+        self.tray_pause_action.triggered.connect(self.toggle_pause)
+        self.tray_end_action.triggered.connect(self.end_active_workspace)
+        self.tray_icon.activated.connect(self.handle_tray_activation)
+        self.tray_exit_action.triggered.connect(self.quit_application)
+
+        if QSystemTrayIcon.isSystemTrayAvailable():
+            self.tray_icon.show()
+
+    def show_from_tray(self) -> None:
+        self.showNormal()
+        self.raise_()
+        self.activateWindow()
+
+    def handle_tray_activation(
+        self,
+        reason: QSystemTrayIcon.ActivationReason,
+    ) -> None:
+        if reason in (
+            QSystemTrayIcon.ActivationReason.Trigger,
+            QSystemTrayIcon.ActivationReason.DoubleClick,
+        ):
+            self.show_from_tray()
+
+    def quit_application(self) -> None:
+        self.show_from_tray()
+        self.is_quitting = True
+        self.close()
+        self.is_quitting = False
+
     def closeEvent(self, event) -> None:
+        if not self.is_quitting and self.close_to_tray and QSystemTrayIcon.isSystemTrayAvailable():
+            event.ignore()
+            self.hide()
+            self.tray_icon.showMessage(
+                "Workspace Launcher",
+                "Workspace Launcher is still running in the system tray.",
+                QSystemTrayIcon.MessageIcon.Information,
+                2500,
+            )
+            return
         if get_active_workspace_name() is not None:
             QMessageBox.information(
                 self,
@@ -221,6 +289,9 @@ class MainWindow(QMainWindow):
             )
             event.ignore()
             return
+        self.tray_icon.hide()
+        if self.workspace_manager is not None:
+            self.workspace_manager.close()
         event.accept()
 
     def show_about(self) -> None:
@@ -313,6 +384,7 @@ class MainWindow(QMainWindow):
 
         settings_window = SettingsWindow(settings, self)
         if settings_window.exec() == QDialog.DialogCode.Accepted:
+            self.close_to_tray = settings_window.settings["close_to_tray"]
             self.header.set_greeting_name(settings_window.settings["greeting_name"])
             self.refresh_verse(settings_window.settings)
             self.refresh_quote(settings_window.settings)
@@ -389,6 +461,12 @@ class MainWindow(QMainWindow):
     def refresh_session_status(self) -> None:
         name = get_active_workspace_name()
         closing = self.close_timer.isActive()
+        self.tray_pause_action.setEnabled(name is not None and active_session.active and not closing)
+        self.tray_end_action.setEnabled(name is not None and not closing)
+        if active_session.paused:
+            self.tray_pause_action.setText("Resume Workspace")
+        else:
+            self.tray_pause_action.setText("Pause Workspace")
 
         row = self.selected_row
         selected_name = name

@@ -49,6 +49,10 @@ class SettingsWindow(QDialog):
         self.quote_checkbox.setObjectName("settingsCheckbox")
         self.quote_checkbox.setChecked(self.settings["motivation_quote"])
 
+        self.tray_checkbox = QCheckBox("Keep running in the system tray when closing the window")
+        self.tray_checkbox.setObjectName("settingsCheckbox")
+        self.tray_checkbox.setChecked(self.settings["close_to_tray"])
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
@@ -65,6 +69,7 @@ class SettingsWindow(QDialog):
         layout.addWidget(explanation)
         layout.addWidget(self.verse_checkbox)
         layout.addWidget(self.quote_checkbox)
+        layout.addWidget(self.tray_checkbox)
         layout.addWidget(buttons)
 
     def save(self) -> None:
@@ -82,6 +87,7 @@ class SettingsWindow(QDialog):
         settings["greeting_name"] = greeting_name
         settings["bible_verse"] = self.verse_checkbox.isChecked()
         settings["motivation_quote"] = self.quote_checkbox.isChecked()
+        settings["close_to_tray"] = self.tray_checkbox.isChecked()
         settings["close_applications_on_end"] = (
             self.close_applications_checkbox.isChecked()
         )
