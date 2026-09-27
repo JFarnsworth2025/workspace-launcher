@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
-    QPushButton,
     QDialog,
     QVBoxLayout,
     QWidget,
@@ -22,7 +21,7 @@ from services.launcher_service import (
     active_session,
 )
 
-from config import APP_NAME, PROJECT_ROOT
+from config import APP_NAME, APP_VERSION, PROJECT_ROOT
 from PySide6.QtGui import QIcon
 from ui.history_window import HistoryWindow, format_record
 from ui.header_panel import HeaderPanel
@@ -104,24 +103,7 @@ class MainWindow(QMainWindow):
         )
         layout.addWidget(self.workspace_load_warning)
 
-        reload_button = QPushButton("Reload Workspaces")
-        reload_button.clicked.connect(self.refresh_workspaces)
-        layout.addWidget(reload_button)
-
-        manager_button = QPushButton("Manage Workspaces")
-        layout.addWidget(manager_button)
-        manager_button.clicked.connect(self.show_workspace_manager)
-
-        history_button = QPushButton("View History")
-        layout.addWidget(history_button)
-        history_button.clicked.connect(self.show_history)
-
-        settings_button = QPushButton("Settings")
-        layout.addWidget(settings_button)
-        settings_button.clicked.connect(self.show_settings)
-
-        for button in (reload_button, manager_button, history_button, settings_button):
-            button.setObjectName("secondaryButton")
+        self.create_navbar()
 
         self.session_timer = QTimer(self)
         self.session_timer.setInterval(1000)
@@ -131,6 +113,54 @@ class MainWindow(QMainWindow):
         self.refresh_workspaces()
         self.refresh_last_workspace()
         self.refresh_session_status()
+
+    def create_navbar(self) -> None:
+        self.menu_bar = self.menuBar()
+        self.file_menu = self.menu_bar.addMenu("File")
+        self.workspace_menu = self.menu_bar.addMenu("Workspaces")
+        self.help_menu = self.menu_bar.addMenu("Help")
+
+        self.settings_action = self.file_menu.addAction("Settings")
+        self.settings_action.triggered.connect(self.show_settings)
+        self.file_menu.addSeparator()
+        self.exit_action = self.file_menu.addAction("Exit Workspace Launcher")
+        self.exit_action.triggered.connect(self.close)
+
+        self.manager_action = self.workspace_menu.addAction("Manage Workspaces")
+        self.manager_action.triggered.connect(self.show_workspace_manager)
+        self.history_action = self.workspace_menu.addAction("Workspace History")
+        self.history_action.triggered.connect(self.show_history)
+        self.workspace_menu.addSeparator()
+        self.reload_action = self.workspace_menu.addAction("Reload Workspaces")
+        self.reload_action.triggered.connect(self.refresh_workspaces)
+
+        self.about_action = self.help_menu.addAction("About Workspace Launcher")
+        self.about_action.triggered.connect(self.show_about)
+
+    def closeEvent(self, event) -> None:
+        if get_active_workspace_name() is not None:
+            QMessageBox.information(
+                self,
+                "Workspace Still Active",
+                "End the current workspace before exiting so its session history can be saved.",
+            )
+            event.ignore()
+            return
+        event.accept()
+
+    def show_about(self) -> None:
+        QMessageBox.about(
+            self,
+            "About Workspace Launcher",
+            "<h3>Workspace Launcher</h3>"
+            f"<p>Version {APP_VERSION}</p>"
+            "<p style='color:#8B71FF;'><b>A Pariven product</b></p>"
+            "<p>Launch and track focused groups of applications from one place.</p>"
+            "<p style='color:#176BEA;'>Created and maintained by "
+            "<span style='color:#9A7CFF;'><b>Pariven</b></span>.</p>"
+            "<p>Copyright © 2026 Jacob Farnsworth. All rights reserved.</p>"
+            "<p>Third-party components remain subject to their respective licenses.</p>",
+        )
 
     def toggle_workspace(self) -> None:
         if get_active_workspace_name() is None:
@@ -227,7 +257,7 @@ class MainWindow(QMainWindow):
             self.workspace_cards.append(card)
         if errors:
             message = "Some workspaces could not be loaded. Files were not changed. "
-            message += "Fix the listed files, then click Reload Workspaces.\n\n"
+            message += "Fix the listed files, then choose Workspaces > Reload Workspaces.\n\n"
             message += "\n".join(errors)
             self.workspace_load_warning.setText(message)
             self.workspace_load_warning.show()
