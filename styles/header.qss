@@ -1,0 +1,212 @@
+/*==========================================================*
+ * Header Panel
+ *==========================================================*/
+
+#headerPanel {
+    background-color: #323438;
+    border: 1px solid #4A4E56;
+    border-radius: 12px;
+}
+
+
+/*==========================================================*
+ * Header Sections
+ *==========================================================*/
+
+#headerLeft,
+#headerCenter,
+#headerRight {
+    background: transparent;
+}
+
+#headerCenter {
+    border-left: 1px solid #434852;
+    border-right: 1px solid #434852;
+}
+
+#headerLeft {
+    padding-right: 18px;
+}
+
+#headerRight {
+    padding-left: 18px;
+}
+
+/*==========================================================*
+ * Logo
+ *==========================================================*/
+
+#headerLogo {
+    background: transparent;
+    border: none;
+}
+
+
+/*==========================================================*
+ * Greeting
+ *==========================================================*/
+
+#headerGreeting {
+    color: #FFFFFF;
+
+    font-size: 20px;
+    font-weight: 700;
+
+    background: transparent;
+    border: none;
+}
+
+
+/*==========================================================*
+ * Last Workspace
+ *==========================================================*/
+
+#headerLastWorkspaceTitle {
+    color: #9FA8B6;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    background: transparent;
+    border: none;
+}
+
+#headerLastWorkspace {
+    color: #F5F7FA;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    background: transparent;
+    border: none;
+}
+
+#headerLastWorkspaceTime {
+    color: #9FA8B6;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    background: transparent;
+    border: none;
+}
+
+
+/*==========================================================*
+ * Current Workspace
+ *==========================================================*/
+
+#headerCurrentTitle {
+    color: #9FA8B6;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    background: transparent;
+    border: none;
+}
+
+#headerCurrentWorkspace {
+    color: #9FA8B6;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    background: transparent;
+    border: none;
+}
+
+#headerCurrentTimer {
+    color: #3EA6FF;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    background: transparent;
+    border: none;
+}
+
+#headerCurrentWorkspace[state="idle"] {
+    color: #9FA8B6;
+}
+
+#headerCurrentWorkspace[state="selected"] {
+    color: #3EA6FF;
+}
+
+#headerCurrentWorkspace[state="running"] {
+    color: #3FB950;
+}
+
+#headerCurrentWorkspace[state="paused"] {
+    color: #E3B341;
+}
+
+/*==========================================================*
+ * Workspace Action
+ *==========================================================*/
+
+#workspaceActionButton {
+    min-height: 28px;
+    max-height: 28px;
+    padding: 0 14px;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    border-radius: 7px;
+}
+
+#workspaceActionButton[actionState="start"] {
+    background-color: #248BE8;
+    border-color: #3EA6FF;
+}
+
+#workspaceActionButton[actionState="start"]:hover {
+    background-color: #3EA6FF;
+}
+
+#workspaceActionButton[actionState="pause"] {
+    background-color: #9A6700;
+    border-color: #D29922;
+}
+
+#workspaceActionButton[actionState="pause"]:hover {
+    background-color: #B58105;
+}
+
+#workspaceActionButton[actionState="resume"] {
+    background-color: #238636;
+    border-color: #3FB950;
+}
+
+#workspaceActionButton[actionState="resume"]:hover {
+    background-color: #2EA043;
+}
+
+#workspaceActionButton[actionState="disabled"] {
+    color: #707782;
+    background-color: #292C31;
+    border-color: #434852;
+}
+
+#endWorkspaceButton {
+    min-width: 62px;
+    min-height: 28px;
+    max-height: 28px;
+    padding: 0 12px;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 700;
+    background-color: #8E3030;
+    border: 1px solid #D04444;
+    border-radius: 7px;
+}
+
+#endWorkspaceButton:hover {
+    background-color: #B33A3A;
+    border-color: #F85149;
+}
+
+
+

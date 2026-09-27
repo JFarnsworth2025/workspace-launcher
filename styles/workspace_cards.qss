@@ -1,0 +1,146 @@
+/*==========================================================
+    Workspace Launcher
+    Workspace Cards
+==========================================================*/
+
+
+/*==========================================================
+    Card
+==========================================================*/
+
+#workspaceCard {
+
+    background-color: #353941;
+
+    border: 1px solid #4B515B;
+
+    border-radius: 16px;
+
+    padding: 6px;
+
+}
+
+/*==========================================================
+    Hover
+==========================================================*/
+
+#workspaceCard:hover {
+
+    background-color: #3B4049;
+
+    border: 1px solid #67A5FF;
+
+}
+
+
+/*==========================================================
+    Selected
+==========================================================*/
+
+#workspaceCard[selected="true"] {
+
+    background-color: #404650;
+
+    border: 1px solid #3EA6FF;
+
+}
+
+
+/*==========================================================
+    Pressed
+==========================================================*/
+
+#workspaceCard:pressed {
+
+    background-color: #2A2E34;
+
+}
+
+/*==========================================================
+    Future Icons
+==========================================================*/
+
+#workspaceIcon {
+
+    background: transparent;
+
+    border: none;
+
+}
+
+#workspaceCard[locked="true"] {
+    background-color: #30333A;
+    border-color: #40454E;
+}
+
+#workspaceCard[locked="true"][selected="true"] {
+    background-color: #404650;
+    border-color: #3EA6FF;
+}
+
+
+/*==========================================================
+    Empty Workspace State
+==========================================================*/
+
+#emptyWorkspaceState {
+    background-color: #2B2D31;
+    border: 1px solid #434852;
+    border-radius: 16px;
+}
+
+#emptyWorkspaceIcon {
+    background-color: #354457;
+    color: #63B8FF;
+    border: 1px solid #5D7FA7;
+    border-radius: 26px;
+    padding: 0px;
+    margin: 0px;
+    font-size: 25px;
+    font-weight: 500;
+}
+
+#emptyWorkspaceTitle {
+    color: #F4F6F8;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+#emptyWorkspaceDescription {
+    color: #AEB6C1;
+    font-size: 13px;
+}
+
+#emptyWorkspacePrimaryButton {
+    background-color: #3E4F66;
+    color: #FFFFFF;
+    border: 1px solid #5D7FA7;
+    border-radius: 8px;
+    min-width: 180px;
+    padding: 9px 18px;
+    font-weight: 600;
+}
+
+#emptyWorkspacePrimaryButton:hover {
+    background-color: #49617D;
+    border-color: #63B8FF;
+}
+
+#emptyWorkspacePrimaryButton:pressed {
+    background-color: #324456;
+}
+
+#emptyWorkspaceManagerButton {
+    background: transparent;
+    color: #9FCBFF;
+    border: none;
+    padding: 5px 12px;
+}
+
+#emptyWorkspaceManagerButton:hover {
+    color: #FFFFFF;
+    text-decoration: underline;
+}
+
+
+

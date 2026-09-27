@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QListWidget,
+    QListWidgetItem,
     QLabel,
 )
 
@@ -20,13 +21,16 @@ from services.launcher_service import (
     active_session,
 )
 
-from config import APP_NAME
-from ui.workspace_editor import WorkspaceEditor
-from ui.history_window import HistoryWindow
+from config import APP_NAME, PROJECT_ROOT
+from PySide6.QtGui import QIcon
+from ui.history_window import HistoryWindow, format_record
+from ui.header_panel import HeaderPanel
+from ui.workspace_card import WorkspaceCard
+from ui.workspace_window import WorkspaceWindow
 from ui.settings_window import SettingsWindow
 from services.settings_service import load_settings
-from services.greeting_service import get_time_based_greeting
-from services.workspace_service import save_workspace, load_workspaces, delete_workspace
+from services.history_service import load_history
+from services.workspace_service import load_workspaces
 
 
 class MainWindow(QMainWindow):
@@ -40,6 +44,7 @@ class MainWindow(QMainWindow):
         self.close_timer.timeout.connect(self.check_application_close)
 
         self.setWindowTitle(APP_NAME)
+        self.setWindowIcon(QIcon(str(PROJECT_ROOT / "assets/icons/app.png")))
         self.resize(1000, 700)
 
         central_widget = QWidget()
@@ -47,21 +52,35 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
-        self.greeting_label = QLabel()
-        self.greeting_label.setTextFormat(Qt.TextFormat.PlainText)
-        layout.addWidget(self.greeting_label)
+        greeting_name = ""
+        settings_error = False
         try:
             settings = load_settings()
-            self.greeting_label.setText(
-                get_time_based_greeting(settings["greeting_name"])
-            )
+            greeting_name = settings["greeting_name"]
         except (OSError, ValueError):
-            self.greeting_label.setText(
+            settings_error = True
+
+        self.header = HeaderPanel(greeting_name)
+        self.header.setStyleSheet(
+            (PROJECT_ROOT / "styles/header.qss").read_text(encoding="utf-8")
+        )
+        layout.addWidget(self.header)
+        self.header.workspace_action_button.clicked.connect(self.toggle_workspace)
+        self.header.end_workspace_button.clicked.connect(self.end_active_workspace)
+        if settings_error:
+            self.header.greeting_label.setText(
                 "Settings could not be loaded. Open Settings for details."
             )
 
         self.workspace_list = QListWidget()
+        self.workspace_cards = []
+        self.workspace_manager = None
+        self.workspace_list.setSpacing(8)
+        card_styles = (PROJECT_ROOT / "styles/workspace_cards.qss").read_text(encoding="utf-8")
+        card_styles += (PROJECT_ROOT / "styles/typography.qss").read_text(encoding="utf-8")
+        self.workspace_list.setStyleSheet(card_styles)
         layout.addWidget(self.workspace_list)
+        self.workspace_list.currentRowChanged.connect(self.refresh_session_status)
 
         self.workspace_load_warning = QLabel()
         self.workspace_load_warning.setTextFormat(Qt.TextFormat.PlainText)
@@ -75,29 +94,9 @@ class MainWindow(QMainWindow):
         reload_button.clicked.connect(self.refresh_workspaces)
         layout.addWidget(reload_button)
 
-        create_workspace_button = QPushButton("Create Workspace")
-        layout.addWidget(create_workspace_button)
-        create_workspace_button.clicked.connect(self.create_workspace)
-
-        edit_workspace_button = QPushButton("Edit Workspace")
-        layout.addWidget(edit_workspace_button)
-        edit_workspace_button.clicked.connect(self.edit_workspace)
-
-        delete_workspace_button = QPushButton("Delete Workspace")
-        layout.addWidget(delete_workspace_button)
-        delete_workspace_button.clicked.connect(self.delete_selected_workspace)
-
-        launch_workspace_button = QPushButton("Launch Workspace")
-        layout.addWidget(launch_workspace_button)
-        launch_workspace_button.clicked.connect(self.launch_selected_workspace)
-
-        end_workspace_button = QPushButton("End Workspace")
-        layout.addWidget(end_workspace_button)
-        end_workspace_button.clicked.connect(self.end_active_workspace)
-
-        self.pause_button = QPushButton("Pause")
-        layout.addWidget(self.pause_button)
-        self.pause_button.clicked.connect(self.toggle_pause)
+        manager_button = QPushButton("Manage Workspaces")
+        layout.addWidget(manager_button)
+        manager_button.clicked.connect(self.show_workspace_manager)
 
         history_button = QPushButton("View History")
         layout.addWidget(history_button)
@@ -113,7 +112,48 @@ class MainWindow(QMainWindow):
         self.session_timer.start()
 
         self.refresh_workspaces()
+        self.refresh_last_workspace()
         self.refresh_session_status()
+
+    def toggle_workspace(self) -> None:
+        if get_active_workspace_name() is None:
+            self.launch_selected_workspace()
+        else:
+            self.toggle_pause()
+
+    def show_workspace_manager(self) -> None:
+        if self.workspace_manager is None:
+            self.workspace_manager = WorkspaceWindow(self)
+            self.workspace_manager.workspaces_changed.connect(self.refresh_workspaces)
+        else:
+            self.workspace_manager.reload_workspaces()
+        self.workspace_manager.show()
+        self.workspace_manager.raise_()
+        self.workspace_manager.activateWindow()
+
+    def select_workspace_card(self, workspace: dict) -> None:
+        if get_active_workspace_name() is not None:
+            return
+        for row in range(len(self.workspaces)):
+            if self.workspaces[row]["name"] == workspace["name"]:
+                self.workspace_list.setCurrentRow(row)
+                return
+
+    def refresh_last_workspace(self) -> None:
+        try:
+            records = load_history()
+        except (OSError, ValueError):
+            self.header.last_workspace_label.setText("History unavailable")
+            self.header.last_workspace_time.setText("Open View History for details")
+            return
+
+        for record in reversed(records):
+            try:
+                name, start, end, duration = format_record(record)
+            except (ValueError, OverflowError):
+                continue
+            self.header.set_last_workspace(name, duration)
+            return
 
     def show_history(self) -> None:
         history_window = HistoryWindow(self)
@@ -128,39 +168,22 @@ class MainWindow(QMainWindow):
 
         settings_window = SettingsWindow(settings, self)
         if settings_window.exec() == QDialog.DialogCode.Accepted:
-            self.greeting_label.setText(
-                get_time_based_greeting(settings_window.settings["greeting_name"])
-            )
-
-    def create_workspace(self) -> None:
-
-        workspace_editor = WorkspaceEditor()
-
-        result = workspace_editor.exec()
-
-        if result != QDialog.DialogCode.Accepted:
-            return
-
-        workspace = workspace_editor.get_workspace()
-
-        if workspace["name"] == "":
-            QMessageBox.warning(self, "Warning", "Workspace name cannot be empty.")
-            return
-
-        try:
-            save_workspace(workspace)
-        except (OSError, ValueError) as e:
-            QMessageBox.warning(self, "Could Not Save Workspace", str(e))
-            return
-        self.refresh_workspaces()
+            self.header.set_greeting_name(settings_window.settings["greeting_name"])
 
     def refresh_workspaces(self) -> None:
         errors = []
         workspaces = load_workspaces(errors=errors)
+        self.workspace_cards = []
         self.workspace_list.clear()
         self.workspaces = workspaces
         for workspace in self.workspaces:
-            self.workspace_list.addItem(workspace["name"])
+            card = WorkspaceCard(workspace)
+            card.clicked.connect(self.select_workspace_card)
+            item = QListWidgetItem()
+            item.setSizeHint(card.sizeHint())
+            self.workspace_list.addItem(item)
+            self.workspace_list.setItemWidget(item, card)
+            self.workspace_cards.append(card)
         if errors:
             message = "Some workspaces could not be loaded. Files were not changed. "
             message += "Fix the listed files, then click Reload Workspaces.\n\n"
@@ -170,6 +193,7 @@ class MainWindow(QMainWindow):
         else:
             self.workspace_load_warning.clear()
             self.workspace_load_warning.hide()
+        self.refresh_session_status()
 
     def get_selected_workspace(self) -> dict | None:
         row = self.workspace_list.currentRow()
@@ -178,54 +202,6 @@ class MainWindow(QMainWindow):
             return None
 
         return self.workspaces[row]
-
-    def edit_workspace(self) -> None:
-        original_workspace = self.get_selected_workspace()
-        if original_workspace is None:
-            return
-
-        workspace_editor = WorkspaceEditor(original_workspace)
-        result = workspace_editor.exec()
-
-        if result != QDialog.DialogCode.Accepted:
-            return
-
-        workspace = workspace_editor.get_workspace()
-        if workspace["name"] == "":
-            QMessageBox.warning(self, "Warning", "Workspace name cannot be empty.")
-            return
-
-        try:
-            save_workspace(workspace, original_name=original_workspace["name"])
-        except (OSError, ValueError) as e:
-            QMessageBox.warning(self, "Could Not Save Workspace", str(e))
-            return
-
-        self.refresh_workspaces()
-
-    def delete_selected_workspace(self) -> None:
-        workspace = self.get_selected_workspace()
-
-        if workspace is None:
-            return
-
-        answer = QMessageBox.question(
-            self,
-            "Delete Workspace",
-            f"Are you sure you want to delete the workspace '{workspace['name']}'?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-
-        if answer != QMessageBox.StandardButton.Yes:
-            return
-
-        try:
-            delete_workspace(workspace["name"])
-        except (OSError, ValueError) as error:
-            QMessageBox.warning(self, "Could Not Delete Workspace", str(error))
-            return
-        self.refresh_workspaces()
 
     def launch_selected_workspace(self) -> None:
         workspace = self.get_selected_workspace()
@@ -262,18 +238,41 @@ class MainWindow(QMainWindow):
         name = get_active_workspace_name()
         closing = self.close_timer.isActive()
 
-        self.pause_button.setEnabled(active_session.active and not closing)
-        self.pause_button.setText("Resume" if active_session.paused else "Pause")
+        row = self.workspace_list.currentRow()
+        selected_name = name
+        if name is None and row >= 0:
+            selected_name = self.workspaces[row]["name"]
+        for card in self.workspace_cards:
+            card.set_selected(card.workspace["name"] == selected_name)
+            card.set_locked(name is not None)
+
+        if name is None:
+            row = self.workspace_list.currentRow()
+            if row >= 0:
+                self.header.set_selected_workspace(self.workspaces[row]["name"])
+            else:
+                self.header.clear_workspace_selection()
+        else:
+            self.header.workspace_started(name)
+            self.header.update_workspace_timer(active_session.get_elapsed_time())
+            if active_session.paused:
+                self.header.workspace_paused()
+
+        self.header.end_workspace_button.setEnabled(not closing)
 
         if closing:
+            self.header.workspace_action_button.setEnabled(False)
+            self.header.workspace_action_button.setText("Closing...")
             self.statusBar().showMessage("Closing Applications... Please wait")
             return
 
         if name is None:
             self.statusBar().showMessage("No active workspace.")
         elif not active_session.active:
+            self.header.workspace_action_button.setEnabled(False)
+            self.header.workspace_action_button.setText("History not saved")
             self.statusBar().showMessage(
-                f"History not saved: {name} | Click End Workspace to retry."
+                f"History not saved: {name} | Click End to retry."
             )
         else:
             state = "Paused" if active_session.paused else "Active"
@@ -355,7 +354,7 @@ class MainWindow(QMainWindow):
 
             self.close_checks = 0
             self.close_timer.start()
-            self.statusBar().showMessage("Closing applications... Please wait.")
+            self.refresh_session_status()
             return
 
         self.finish_workspace()
@@ -410,9 +409,10 @@ class MainWindow(QMainWindow):
                 self,
                 "History Not Saved",
                 "The session timer has stopped, but its history could not be saved.\n\n"
-                "The record is kept in memory while this app stays open. After resolving the problem, click End Workspace to retry.\n\n"
+                "The record is kept in memory while this app stays open. After resolving the problem, click End to retry.\n\n"
                 f"{e}",
             )
             return
 
+        self.refresh_last_workspace()
         self.refresh_session_status()
