@@ -17,7 +17,19 @@ def get_today_reference() -> dict:
 
 
 def get_daily_verse() -> dict:
+    if not DAILY_VERSES:
+        return {"reference": "Today's Verse", "text": "Today's verse is currently unavailable."}
     reference = get_today_reference()
+    start_index = DAILY_VERSES.index(reference)
+    for offset in range(min(3, len(DAILY_VERSES))):
+        reference = DAILY_VERSES[(start_index + offset) % len(DAILY_VERSES)]
+        verse = fetch_verse(reference)
+        if verse is not None:
+            return verse
+    return {"reference": "Today's Verse", "text": "Today's verse is currently unavailable."}
+
+
+def fetch_verse(reference: dict) -> dict | None:
     reference_label = (
         f"{reference['book']} {reference['chapter']}:"
         f"{reference['start_verse']}-{reference['end_verse']}"
@@ -56,8 +68,16 @@ def get_daily_verse() -> dict:
             ):
                 continue
 
-            parts = [piece for piece in item["content"] if isinstance(piece, str)]
-            verses.append(f"{verse_number}. {' '.join(parts)}")
+            parts = []
+            for piece in item["content"]:
+                if isinstance(piece, str):
+                    parts.append(piece)
+                elif isinstance(piece, dict) and isinstance(piece.get("text"), str):
+                    parts.append(piece["text"])
+            text = " ".join(parts).strip()
+            if not text:
+                raise ValueError("The requested verse has no readable text.")
+            verses.append(f"{verse_number}. {text}")
 
         if not verses:
             raise ValueError("The verse response did not contain the requested verses.")
@@ -73,7 +93,4 @@ def get_daily_verse() -> dict:
         }
     except (KeyError, TypeError, ValueError) as error:
         logger.warning("Daily verse response could not be read: %s", error)
-        return {
-            "reference": reference_label,
-            "text": "Today's verse is unavailable while offline.",
-        }
+        return None
