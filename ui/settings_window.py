@@ -88,7 +88,7 @@ class SettingsWindow(QDialog):
         self.workspace_behavior_title.setObjectName("settingsSectionTitle")
 
         self.workspace_behavior_description = QLabel(
-            "You will still be asked before applications are stopped. Force-stopping can lose unsaved work. "
+            "Enabled: ending a workspace force-stops its tracked applications without confirmation. Unsaved work may be lost. "
             "Files, folders, and websites always remain open."
         )
         self.workspace_behavior_description.setObjectName(
@@ -97,7 +97,7 @@ class SettingsWindow(QDialog):
         self.workspace_behavior_description.setWordWrap(True)
 
         self.close_applications_checkbox = QCheckBox(
-            "Select Yes by default when asked to close applications"
+            "Close launched applications when a workspace ends"
         )
         self.close_applications_checkbox.setObjectName("settingsCheckbox")
 

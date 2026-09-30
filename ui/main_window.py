@@ -672,47 +672,18 @@ class MainWindow(QMainWindow):
             self.finish_workspace()
             return
 
-        answer = QMessageBox.question(
-            self,
-            "End Workspace",
-            f'End "{name}"? You can choose whether to close its applications next.',
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-
-        if answer != QMessageBox.StandardButton.Yes:
-            return
-
-        default_choice = QMessageBox.StandardButton.No
+        close_applications = False
         try:
             settings = load_settings()
-            if settings["close_applications_on_end"]:
-                default_choice = QMessageBox.StandardButton.Yes
+            close_applications = settings["close_applications_on_end"]
         except (OSError, ValueError) as error:
             QMessageBox.warning(
                 self,
                 "Could Not Load Settings",
-                "The default choice will leave applications open.\n\n" + str(error),
+                "Applications will be left open.\n\n" + str(error),
             )
 
-        close_choice = QMessageBox.question(
-            self,
-            "Close Applications",
-            "Force-stop tracked applications? Unsaved work may be lost.\n"
-            "Files, folders, and websites will remain open.\n\n"
-            "Yes: force-stop applications.\n"
-            "No: leave applications open.\n"
-            "Cancel: keep the workspace active.",
-            QMessageBox.StandardButton.Yes
-            | QMessageBox.StandardButton.No
-            | QMessageBox.StandardButton.Cancel,
-            default_choice,
-        )
-
-        if close_choice == QMessageBox.StandardButton.Cancel:
-            return
-
-        if close_choice == QMessageBox.StandardButton.Yes:
+        if close_applications:
             close_errors = request_application_close()
 
             if close_errors:
