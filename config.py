@@ -5,7 +5,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 
 APP_NAME = "Workspace Launcher"
 APP_AUTHOR = "Pariven"
-APP_VERSION = "0.1.0"
+APP_VERSION = "1.0.0"
 GITHUB_OWNER = "JFarnsworth2025"
 GITHUB_REPOSITORY = "workspace-launcher"
 

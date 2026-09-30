@@ -2,3 +2,5 @@ __pycache__
 PROJECT_HANDOFF.md
 .venv/
 personal-test-workspaces/
+build/
+dist/

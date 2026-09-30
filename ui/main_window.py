@@ -379,7 +379,7 @@ class MainWindow(QMainWindow):
             "<p>Launch and track focused groups of applications from one place.</p>"
             "<p style='color:#176BEA;'>Created and maintained by "
             "<span style='color:#9A7CFF;'><b>Pariven</b></span>.</p>"
-            "<p>Copyright © 2026 Jacob Farnsworth. All rights reserved.</p>"
+            "<p>Copyright © 2026 Jacob Farnsworth. Licensed under the MIT License.</p>"
             "<p>Third-party components remain subject to their respective licenses.</p>",
         )
 

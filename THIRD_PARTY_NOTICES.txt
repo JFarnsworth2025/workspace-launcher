@@ -1,0 +1,23 @@
+Workspace Launcher 1.0.0 - Third-party inventory
+
+Workspace Launcher is MIT licensed. The components below retain their own licenses.
+License and notice files supplied by installed distributions are copied into third-party-licenses/.
+This inventory is not a determination of redistribution compliance.
+
+PySide6 6.11.1
+PySide6_Essentials 6.11.1
+PySide6_Addons 6.11.1
+shiboken6 6.11.1
+requests 2.34.2
+urllib3 2.8.0
+certifi 2026.7.22
+charset-normalizer 3.5.1
+idna 3.20
+pyinstaller 6.22.3
+
+Python 3.14.7
+
+External services: bible.helloao.org (BSB Bible text), zenquotes.io (quotes), GitHub releases API.
+Quote attribution: Inspirational quotes provided by ZenQuotes API (https://zenquotes.io).
+
+Release review pending: installed Qt/PySide distribution license files contain only a commercial-license notice. Verify the applicable distribution terms and complete notices before public binary release.
