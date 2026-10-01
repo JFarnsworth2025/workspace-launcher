@@ -11,6 +11,7 @@ a = Analysis(
         ("data/daily_verses.json", "data"),
         ("LICENSE", "."),
         ("README.md", "."),
+        ("REBUILDING.md", "."),
         ("third-party-licenses", "third-party-licenses"),
         ("THIRD_PARTY_NOTICES.txt", "."),
     ],
@@ -18,17 +19,34 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=["setuptools"],
     noarchive=False,
     optimize=0,
 )
 
 pyz = PYZ(a.pure)
 
+# Keep the Widgets app's plugins; omit unused PDF, QML and virtual-keyboard code.
+qt_libraries = {"Qt6Core.dll", "Qt6Gui.dll", "Qt6Network.dll", "Qt6Widgets.dll", "Qt6OpenGL.dll", "Qt6Svg.dll"}
+qt_plugins = {"qgif.dll", "qico.dll", "qjpeg.dll", "qsvg.dll", "qsvgicon.dll",
+              "qwindows.dll", "qoffscreen.dll", "qminimal.dll", "qmodernwindowsstyle.dll",
+              "qnetworklistmanager.dll", "qschannelbackend.dll", "qcertonlybackend.dll"}
+release_binaries = []
+for entry in a.binaries:
+    name = entry[0].replace("\\", "/")
+    filename = name.rsplit("/", 1)[-1]
+    if name.startswith("PySide6/Qt6") and filename not in qt_libraries:
+        continue
+    if name.startswith("PySide6/plugins/") and filename not in qt_plugins:
+        continue
+    if filename == "opengl32sw.dll":
+        continue
+    release_binaries.append(entry)
+
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
+    release_binaries,
     a.datas,
     [],
     name="Workspace Launcher",

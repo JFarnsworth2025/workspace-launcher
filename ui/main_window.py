@@ -380,7 +380,9 @@ class MainWindow(QMainWindow):
             "<p style='color:#176BEA;'>Created and maintained by "
             "<span style='color:#9A7CFF;'><b>Pariven</b></span>.</p>"
             "<p>Copyright © 2026 Jacob Farnsworth. Licensed under the MIT License.</p>"
-            "<p>Third-party components remain subject to their respective licenses.</p>",
+            "<p>Uses Qt and PySide6, copyright The Qt Company Ltd. and contributors, "
+            "under LGPLv3. License texts and source/rebuild information are included "
+            "in the release notices and third-party-licenses folder.</p>",
         )
 
     def toggle_workspace(self) -> None:

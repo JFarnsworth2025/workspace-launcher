@@ -35,6 +35,10 @@ class QuoteCard(QFrame):
         self.build_quote()
         self.main_layout.setSpacing(10)
         self.build_author()
+        self.source_label = QLabel('Quotes provided by <a href="https://zenquotes.io/">ZenQuotes API</a>')
+        self.source_label.setOpenExternalLinks(True)
+        self.source_label.setWordWrap(True)
+        self.main_layout.addWidget(self.source_label)
 
     def build_title(self) -> None:
 

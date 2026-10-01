@@ -1,23 +1,49 @@
-Workspace Launcher 1.0.0 - Third-party inventory
+Workspace Launcher 1.0.0 - Third-party notices
 
-Workspace Launcher is MIT licensed. The components below retain their own licenses.
-License and notice files supplied by installed distributions are copied into third-party-licenses/.
-This inventory is not a determination of redistribution compliance.
+Workspace Launcher source is MIT licensed. This does not replace the licenses of
+bundled libraries. The application uses unmodified Qt/PySide libraries under LGPLv3.
+Qt and PySide are copyright The Qt Company Ltd. and their respective contributors.
 
-PySide6 6.11.1
-PySide6_Essentials 6.11.1
-PySide6_Addons 6.11.1
-shiboken6 6.11.1
-requests 2.34.2
-urllib3 2.8.0
-certifi 2026.7.22
-charset-normalizer 3.5.1
-idna 3.20
-pyinstaller 6.22.3
+Qt/PySide6/Shiboken6 6.11.1
+The bundled Qt modules are Core, Gui, Widgets, Network, OpenGL and SVG, with the
+Windows platform/style, basic image, SVG icon and Windows TLS/network plugins.
+Unused Qt PDF, QML, Quick and VirtualKeyboard plugins/libraries are excluded.
+Upstream LGPL/GPL texts and attribution records are under third-party-licenses/
+Qt-6.11.1/. This is a superset of upstream notices and may describe components not
+present in the executable. Original wheel commercial-option notices are preserved;
+they do not change the LGPL option declared in the installed package metadata.
 
-Python 3.14.7
+Matching unmodified sources accompany this release as separate assets:
+qtbase-everywhere-src-6.11.1.tar.xz
+qtsvg-everywhere-src-6.11.1.tar.xz
+pyside-setup-everywhere-src-6.11.1.tar.xz (includes Shiboken)
+Their SHA-256 values are recorded in third-party-licenses/Qt-6.11.1/SOURCE-SHA256.txt.
+See REBUILDING.md for replacing libraries and rebuilding this open-source application.
+No restriction is imposed on reverse engineering for debugging library modifications.
 
-External services: bible.helloao.org (BSB Bible text), zenquotes.io (quotes), GitHub releases API.
-Quote attribution: Inspirational quotes provided by ZenQuotes API (https://zenquotes.io).
+Official reference and source locations:
+https://doc.qt.io/qtforpython-6/licenses.html
+https://doc.qt.io/qt-6/lgpl.html
+https://download.qt.io/archive/qt/6.11/6.11.1/submodules/
+https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.11.1-src/
 
-Release review pending: installed Qt/PySide distribution license files contain only a commercial-license notice. Verify the applicable distribution terms and complete notices before public binary release.
+Other runtime components (full supplied notices in third-party-licenses):
+Python 3.14.7 - Python Software Foundation license and included notices
+Requests 2.34.2 - Apache-2.0
+urllib3 2.8.0 - MIT
+certifi 2026.7.22 - MPL-2.0
+charset-normalizer 3.5.1 - MIT
+idna 3.20 - BSD-3-Clause
+OpenSSL 3.5.8 - Apache-2.0 (Python TLS libraries)
+libffi - MIT (Python ctypes library)
+Microsoft runtime DLL terms are included in Python-LICENSE.txt; these components
+are distributed for use on Windows and remain subject to their own terms.
+
+Build tool/bootloader:
+PyInstaller 6.22.3 - GPL with the PyInstaller bootloader exception.
+Its complete supplied COPYING.txt is included.
+
+External services:
+Bible text: BSB via https://bible.helloao.org/ (fetched when enabled, not bundled).
+Inspirational quotes provided by ZenQuotes API: https://zenquotes.io/
+Release checks: GitHub releases API.

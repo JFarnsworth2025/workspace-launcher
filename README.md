@@ -26,9 +26,9 @@ practice maintainable structure and build a meaningful development history.
 
 ## Current status
 
-Version **1.0.0** is in release preparation. A Windows executable has been built
-locally; this README does not imply that a public download has already been published.
-Packaged-app verification and the distribution-notice review remain release tasks.
+Version **1.0.0** provides the core workspace, session, and Windows integration
+features described below. Download availability and release assets are listed on
+the GitHub Releases page.
 
 ## Features
 
@@ -245,9 +245,9 @@ The executable is written to `dist\Workspace Launcher.exe`. Keep it in a stable
 location before enabling Windows startup. Test the packaged app before publishing;
 source-app testing does not validate the packaged build.
 
-Before public binary distribution, resolve the Qt license/notice review recorded in
-`THIRD_PARTY_NOTICES.txt`. The copied package notices alone have not been verified
-as a complete release notice set.
+Release assets include third-party notices and matching Qt/PySide source archives.
+See [REBUILDING.md](REBUILDING.md) for library replacement and rebuild instructions.
+Keep the notice and source materials available when redistributing a build.
 
 For a GitHub release, use tag `v1.0.0` and attach the executable, license notices,
 and a SHA-256 checksum. Do not commit build output or personal data.
